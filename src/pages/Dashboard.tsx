@@ -5,7 +5,11 @@ import StatCard from '@/components/StatCard';
 import StockTable from '@/components/StockTable';
 import ActivityLog from '@/components/ActivityLog';
 import { Package, ShoppingCart, ArrowDownUp, AlertCircle } from 'lucide-react';
+import { useInventory } from '@/hooks/use-inventory';
+import { activityService } from '@/services/api';
+import { useQuery } from '@tanstack/react-query';
 
+// Fallback sample data in case the API is not available
 const sampleInventoryData = [
   { id: '1', name: 'Laptop Dell XPS 13', sku: 'LAP-DEL-001', category: 'Electronics', location: 'Main Warehouse', quantity: 24, unit: 'pcs', status: 'Normal' as const, lastUpdated: '2023-06-10' },
   { id: '2', name: 'iPhone 13 Pro', sku: 'PHN-APP-002', category: 'Electronics', location: 'Main Warehouse', quantity: 5, unit: 'pcs', status: 'Low' as const, lastUpdated: '2023-06-09' },
@@ -24,6 +28,16 @@ const sampleActivities = [
 
 const Dashboard = () => {
   const { toast } = useToast();
+  const { useLowStockItems } = useInventory();
+  
+  // Fetch low stock items from API
+  const { data: lowStockItems, isLoading: isLoadingLowStock, error: lowStockError } = useLowStockItems();
+  
+  // Fetch recent activities
+  const { data: recentActivities, isLoading: isLoadingActivities } = useQuery({
+    queryKey: ['activities'],
+    queryFn: activityService.getRecentActivities,
+  });
   
   React.useEffect(() => {
     // Demo notification
@@ -34,7 +48,16 @@ const Dashboard = () => {
         variant: "destructive",
       });
     }, 1500);
-  }, [toast]);
+    
+    // Log API errors if they occur
+    if (lowStockError) {
+      console.error('Failed to fetch low stock items:', lowStockError);
+    }
+  }, [toast, lowStockError]);
+
+  // Use API data if available, otherwise fall back to sample data
+  const displayedLowStockItems = lowStockItems || sampleInventoryData;
+  const displayedActivities = recentActivities || sampleActivities;
 
   return (
     <div className="space-y-6">
@@ -63,7 +86,7 @@ const Dashboard = () => {
         />
         <StatCard 
           title="Low Stock Alerts" 
-          value="5 items" 
+          value={`${isLoadingLowStock ? '...' : displayedLowStockItems.filter(item => item.status === 'Low').length} items`} 
           icon={<AlertCircle size={24} />}
           trend={{ value: 2, isPositive: false }}
         />
@@ -73,11 +96,15 @@ const Dashboard = () => {
         <div className="lg:col-span-2">
           <StockTable 
             title="Low Stock Items"
-            items={sampleInventoryData}
+            items={displayedLowStockItems}
+            isLoading={isLoadingLowStock}
           />
         </div>
         <div>
-          <ActivityLog activities={sampleActivities} />
+          <ActivityLog 
+            activities={displayedActivities} 
+            isLoading={isLoadingActivities}
+          />
         </div>
       </div>
     </div>

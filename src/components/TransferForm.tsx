@@ -9,13 +9,25 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Loader2 } from 'lucide-react';
+import { useTransfers } from '@/hooks/use-transfers';
 
 type TransferType = 'godown-to-godown' | 'godown-to-shop' | 'shop-to-shop';
 
-const TransferForm = () => {
+interface TransferFormProps {
+  onCancel?: () => void;
+}
+
+const TransferForm = ({ onCancel }: TransferFormProps) => {
   const [transferType, setTransferType] = useState<TransferType>('godown-to-godown');
+  const [sourceLocation, setSourceLocation] = useState<string>('');
+  const [destinationLocation, setDestinationLocation] = useState<string>('');
+  const [transferDate, setTransferDate] = useState<string>('');
+  const [notes, setNotes] = useState<string>('');
   const [items, setItems] = useState([{ id: 1, productName: '', quantity: '', unit: 'pcs' }]);
+
+  const { useCreateTransfer } = useTransfers();
+  const createTransfer = useCreateTransfer();
 
   const handleAddItem = () => {
     const newItem = {
@@ -54,11 +66,31 @@ const TransferForm = () => {
 
   const locationTypes = getLocationTypes();
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const transferData = {
+      transferType,
+      sourceLocation,
+      destinationLocation,
+      transferDate,
+      notes,
+      items: items.filter(item => item.productName && item.quantity),
+      status: 'Pending'
+    };
+    
+    createTransfer.mutate(transferData, {
+      onSuccess: () => {
+        if (onCancel) onCancel();
+      }
+    });
+  };
+
   return (
     <div className="stock-card">
       <h2 className="text-lg font-semibold mb-4">Create Stock Transfer</h2>
       
-      <div className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Transfer Type</label>
@@ -82,7 +114,7 @@ const TransferForm = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Source {locationTypes.source}
               </label>
-              <Select>
+              <Select value={sourceLocation} onValueChange={setSourceLocation}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder={`Select source ${locationTypes.source.toLowerCase()}`} />
                 </SelectTrigger>
@@ -108,7 +140,7 @@ const TransferForm = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Destination {locationTypes.destination}
               </label>
-              <Select>
+              <Select value={destinationLocation} onValueChange={setDestinationLocation}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder={`Select destination ${locationTypes.destination.toLowerCase()}`} />
                 </SelectTrigger>
@@ -133,7 +165,11 @@ const TransferForm = () => {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Transfer Date</label>
-            <Input type="date" />
+            <Input 
+              type="date" 
+              value={transferDate}
+              onChange={(e) => setTransferDate(e.target.value)}
+            />
           </div>
         </div>
         
@@ -188,6 +224,7 @@ const TransferForm = () => {
                 <Button 
                   variant="ghost" 
                   size="icon" 
+                  type="button"
                   onClick={() => handleRemoveItem(item.id)}
                   disabled={items.length === 1}
                 >
@@ -215,16 +252,32 @@ const TransferForm = () => {
             className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-stock-blue-500" 
             rows={3}
             placeholder="Add any additional notes or instructions..."
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
           ></textarea>
         </div>
         
         <div className="flex justify-end space-x-3">
-          <Button variant="outline">Cancel</Button>
-          <Button variant="default" className="bg-stock-blue-600 hover:bg-stock-blue-700">
-            Create Transfer
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button 
+            type="submit" 
+            variant="default" 
+            className="bg-stock-blue-600 hover:bg-stock-blue-700"
+            disabled={createTransfer.isPending}
+          >
+            {createTransfer.isPending ? (
+              <>
+                <Loader2 size={16} className="mr-1 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              'Create Transfer'
+            )}
           </Button>
         </div>
-      </div>
+      </form>
     </div>
   );
 };

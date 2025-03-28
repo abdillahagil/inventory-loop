@@ -12,7 +12,10 @@ import {
   Clock,
   AlertTriangle
 } from 'lucide-react';
+import { useTransfers } from '@/hooks/use-transfers';
+import { Skeleton } from '@/components/ui/skeleton';
 
+// Fallback sample data
 const sampleTransfers = [
   { 
     id: 'TR-001', 
@@ -98,6 +101,16 @@ const getStatusBadge = (status: string) => {
 
 const Transfers = () => {
   const [showForm, setShowForm] = React.useState(false);
+  const { useAllTransfers, useUpdateTransferStatus } = useTransfers();
+  const { data: transfers, isLoading } = useAllTransfers();
+  const updateTransferStatus = useUpdateTransferStatus();
+  
+  // Use API data if available, otherwise fall back to sample data
+  const displayedTransfers = transfers || sampleTransfers;
+  
+  const handleStatusUpdate = (id: string, status: string) => {
+    updateTransferStatus.mutate({ id, status });
+  };
   
   return (
     <div className="space-y-6">
@@ -118,7 +131,7 @@ const Transfers = () => {
       
       {showForm ? (
         <div>
-          <TransferForm />
+          <TransferForm onCancel={() => setShowForm(false)} />
           <div className="mt-4 text-center">
             <Button 
               variant="outline" 
@@ -168,36 +181,71 @@ const Transfers = () => {
                 </tr>
               </thead>
               <tbody>
-                {sampleTransfers.map((transfer) => (
-                  <tr key={transfer.id}>
-                    <td className="font-medium">{transfer.id}</td>
-                    <td>{transfer.source}</td>
-                    <td>{transfer.destination}</td>
-                    <td>{transfer.items}</td>
-                    <td>{transfer.requestedBy}</td>
-                    <td>{transfer.date}</td>
-                    <td>{getStatusBadge(transfer.status)}</td>
-                    <td>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="ghost" className="h-8 px-2 text-stock-blue-700">
-                          View
-                        </Button>
-                        
-                        {transfer.status === 'Pending' && (
-                          <Button size="sm" variant="ghost" className="h-8 px-2 text-alert-green">
-                            Approve
+                {isLoading ? (
+                  // Loading skeleton
+                  Array(5).fill(0).map((_, index) => (
+                    <tr key={`loading-${index}`}>
+                      <td><Skeleton className="h-5 w-full" /></td>
+                      <td><Skeleton className="h-5 w-full" /></td>
+                      <td><Skeleton className="h-5 w-full" /></td>
+                      <td><Skeleton className="h-5 w-full" /></td>
+                      <td><Skeleton className="h-5 w-full" /></td>
+                      <td><Skeleton className="h-5 w-full" /></td>
+                      <td><Skeleton className="h-5 w-20" /></td>
+                      <td><Skeleton className="h-5 w-20" /></td>
+                    </tr>
+                  ))
+                ) : displayedTransfers.length > 0 ? (
+                  // Actual data
+                  displayedTransfers.map((transfer) => (
+                    <tr key={transfer.id}>
+                      <td className="font-medium">{transfer.id}</td>
+                      <td>{transfer.source}</td>
+                      <td>{transfer.destination}</td>
+                      <td>{transfer.items}</td>
+                      <td>{transfer.requestedBy}</td>
+                      <td>{transfer.date}</td>
+                      <td>{getStatusBadge(transfer.status)}</td>
+                      <td>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="ghost" className="h-8 px-2 text-stock-blue-700">
+                            View
                           </Button>
-                        )}
-                      </div>
+                          
+                          {transfer.status === 'Pending' && (
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-8 px-2 text-alert-green"
+                              onClick={() => handleStatusUpdate(transfer.id, 'In Transit')}
+                            >
+                              Approve
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  // No data
+                  <tr>
+                    <td colSpan={8} className="text-center py-4 text-gray-500">
+                      No transfers found
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
           
           <div className="mt-4 flex justify-between items-center text-sm">
-            <div className="text-gray-500">Showing 1-{sampleTransfers.length} of {sampleTransfers.length} transfers</div>
+            <div className="text-gray-500">
+              {isLoading ? (
+                <Skeleton className="h-4 w-32" />
+              ) : (
+                `Showing 1-${displayedTransfers.length} of ${displayedTransfers.length} transfers`
+              )}
+            </div>
             <div className="flex space-x-1">
               <button className="px-3 py-1 border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-50" disabled>Previous</button>
               <button className="px-3 py-1 border border-gray-300 rounded-md bg-white hover:bg-gray-50">Next</button>

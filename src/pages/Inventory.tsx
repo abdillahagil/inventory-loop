@@ -3,7 +3,9 @@ import React from 'react';
 import StockTable from '@/components/StockTable';
 import { Button } from '@/components/ui/button';
 import { Plus, FileText, Upload, Download } from 'lucide-react';
+import { useInventory } from '@/hooks/use-inventory';
 
+// Fallback sample data
 const sampleInventoryData = [
   { id: '1', name: 'Laptop Dell XPS 13', sku: 'LAP-DEL-001', category: 'Electronics', location: 'Main Warehouse', quantity: 24, unit: 'pcs', status: 'Normal' as const, lastUpdated: '2023-06-10' },
   { id: '2', name: 'iPhone 13 Pro', sku: 'PHN-APP-002', category: 'Electronics', location: 'Main Warehouse', quantity: 5, unit: 'pcs', status: 'Low' as const, lastUpdated: '2023-06-09' },
@@ -18,6 +20,12 @@ const sampleInventoryData = [
 ];
 
 const Inventory = () => {
+  const { useAllInventory } = useInventory();
+  const { data: inventoryItems, isLoading } = useAllInventory();
+  
+  // Use API data if available, otherwise fall back to sample data
+  const displayedItems = inventoryItems || sampleInventoryData;
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -84,7 +92,8 @@ const Inventory = () => {
         <div className="md:col-span-3">
           <StockTable 
             title="All Products"
-            items={sampleInventoryData}
+            items={displayedItems}
+            isLoading={isLoading}
           />
         </div>
       </div>
