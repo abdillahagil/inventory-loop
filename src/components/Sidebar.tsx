@@ -14,21 +14,79 @@ import {
   FileText,
   Truck 
 } from 'lucide-react';
-
-const navItems = [
-  { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/' },
-  { name: 'Inventory', icon: <Package size={20} />, path: '/inventory' },
-  { name: 'Godowns', icon: <Boxes size={20} />, path: '/godowns' },
-  { name: 'Shops', icon: <Store size={20} />, path: '/shops' },
-  { name: 'Transfers', icon: <ArrowLeftRight size={20} />, path: '/transfers' },
-  { name: 'Dispatches', icon: <Truck size={20} />, path: '/dispatches' },
-  { name: 'Sales', icon: <ShoppingCart size={20} />, path: '/sales' },
-  { name: 'Reports', icon: <BarChart size={20} />, path: '/reports' },
-  { name: 'Users', icon: <Users size={20} />, path: '/users' },
-  { name: 'Settings', icon: <Settings size={20} />, path: '/settings' },
-];
+import { useUserStore } from '@/store/userStore';
 
 const Sidebar = () => {
+  const { user } = useUserStore();
+  const userRole = user?.role || 'guest';
+  
+  // Define nav items with role-based visibility
+  const navItems = [
+    { 
+      name: 'Dashboard', 
+      icon: <LayoutDashboard size={20} />, 
+      path: '/',
+      roles: ['superadmin', 'godownadmin', 'shopadmin']
+    },
+    { 
+      name: 'Inventory', 
+      icon: <Package size={20} />, 
+      path: '/inventory',
+      roles: ['superadmin', 'godownadmin', 'shopadmin']
+    },
+    { 
+      name: 'Godowns', 
+      icon: <Boxes size={20} />, 
+      path: '/godowns',
+      roles: ['superadmin', 'godownadmin']
+    },
+    { 
+      name: 'Shops', 
+      icon: <Store size={20} />, 
+      path: '/shops',
+      roles: ['superadmin', 'shopadmin']
+    },
+    { 
+      name: 'Transfers', 
+      icon: <ArrowLeftRight size={20} />, 
+      path: '/transfers',
+      roles: ['superadmin', 'godownadmin']
+    },
+    { 
+      name: 'Dispatches', 
+      icon: <Truck size={20} />, 
+      path: '/dispatches',
+      roles: ['superadmin', 'godownadmin']
+    },
+    { 
+      name: 'Sales', 
+      icon: <ShoppingCart size={20} />, 
+      path: '/sales',
+      roles: ['superadmin', 'shopadmin']
+    },
+    { 
+      name: 'Reports', 
+      icon: <BarChart size={20} />, 
+      path: '/reports',
+      roles: ['superadmin', 'godownadmin', 'shopadmin']
+    },
+    { 
+      name: 'Users', 
+      icon: <Users size={20} />, 
+      path: '/users',
+      roles: ['superadmin']
+    },
+    { 
+      name: 'Settings', 
+      icon: <Settings size={20} />, 
+      path: '/settings',
+      roles: ['superadmin']
+    },
+  ];
+
+  // Filter items based on user role
+  const filteredNavItems = navItems.filter((item) => item.roles.includes(userRole));
+
   return (
     <div className="h-full w-64 bg-sidebar text-sidebar-foreground shadow-lg flex-shrink-0 hidden md:block">
       <div className="p-4 border-b border-sidebar-border">
@@ -36,10 +94,15 @@ const Sidebar = () => {
           <Package className="mr-2" />
           StockMaster
         </h1>
+        {user?.location && (
+          <p className="text-xs mt-1 text-sidebar-foreground/70">
+            {user.location}
+          </p>
+        )}
       </div>
       <nav className="p-4">
         <ul className="space-y-1">
-          {navItems.map((item) => (
+          {filteredNavItems.map((item) => (
             <li key={item.name}>
               <NavLink 
                 to={item.path} 
