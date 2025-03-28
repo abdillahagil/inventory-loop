@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Trash2, Loader2 } from 'lucide-react';
 import { useTransfers } from '@/hooks/use-transfers';
+import { Transfer, TransferItem } from '@/types';
 
 type TransferType = 'godown-to-godown' | 'godown-to-shop' | 'shop-to-shop';
 
@@ -69,14 +70,22 @@ const TransferForm = ({ onCancel }: TransferFormProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const transferData = {
-      transferType,
+    // Convert form items to TransferItem structure
+    const transferItems: Omit<TransferItem, 'id'>[] = items
+      .filter(item => item.productName && item.quantity)
+      .map(item => ({
+        stockItemId: item.productName, // Using productName as stockItemId for now
+        name: item.productName,
+        quantity: Number(item.quantity),
+        unit: item.unit
+      }));
+    
+    const transferData: Omit<Transfer, 'id' | 'createdAt' | 'updatedAt'> = {
       sourceLocation,
       destinationLocation,
-      transferDate,
-      notes,
-      items: items.filter(item => item.productName && item.quantity),
-      status: 'Pending'
+      items: transferItems as TransferItem[], // Type assertion as backend will add IDs
+      status: 'Pending',
+      createdBy: 'Current User', // Add the missing createdBy property
     };
     
     createTransfer.mutate(transferData, {

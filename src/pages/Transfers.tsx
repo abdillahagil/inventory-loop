@@ -1,4 +1,3 @@
-
 import React from 'react';
 import TransferForm from '@/components/TransferForm';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useTransfers } from '@/hooks/use-transfers';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Transfer } from '@/types';
 
 // Fallback sample data
 const sampleTransfers = [
@@ -108,7 +108,7 @@ const Transfers = () => {
   // Use API data if available, otherwise fall back to sample data
   const displayedTransfers = transfers || sampleTransfers;
   
-  const handleStatusUpdate = (id: string, status: string) => {
+  const handleStatusUpdate = (id: string, status: Transfer['status']) => {
     updateTransferStatus.mutate({ id, status });
   };
   
@@ -217,7 +217,7 @@ const Transfers = () => {
                               size="sm" 
                               variant="ghost" 
                               className="h-8 px-2 text-alert-green"
-                              onClick={() => handleStatusUpdate(transfer.id, 'In Transit')}
+                              onClick={() => handleStatusUpdate(transfer.id, 'In Transit' as Transfer['status'])}
                             >
                               Approve
                             </Button>
