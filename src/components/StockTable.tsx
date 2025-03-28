@@ -1,19 +1,7 @@
-
 import React from 'react';
 import { ArrowUpDown, Search, Filter } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-
-interface StockItem {
-  id: string;
-  name: string;
-  sku: string;
-  category: string;
-  location: string;
-  quantity: number;
-  unit: string;
-  status: 'Low' | 'Normal' | 'High';
-  lastUpdated: string;
-}
+import { StockItem } from '@/types';
 
 interface StockTableProps {
   title: string;

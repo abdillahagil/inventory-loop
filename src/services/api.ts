@@ -1,4 +1,6 @@
 
+import { StockItem, Activity, Transfer } from '@/types';
+
 /**
  * API client for interacting with the external Node.js backend
  */
@@ -75,22 +77,22 @@ export const inventoryService = {
 export const transfersService = {
   // Get all transfers
   getTransfers: () => 
-    fetchWithErrorHandling<any[]>(`${API_BASE_URL}/transfers`),
+    fetchWithErrorHandling<Transfer[]>(`${API_BASE_URL}/transfers`),
 
   // Create a new transfer
-  createTransfer: (transferData: any) => 
-    fetchWithErrorHandling<any>(`${API_BASE_URL}/transfers`, {
+  createTransfer: (transferData: Omit<Transfer, 'id' | 'createdAt' | 'updatedAt'>) => 
+    fetchWithErrorHandling<Transfer>(`${API_BASE_URL}/transfers`, {
       method: 'POST',
       body: JSON.stringify(transferData),
     }),
 
   // Get transfer by ID
   getTransferById: (id: string) => 
-    fetchWithErrorHandling<any>(`${API_BASE_URL}/transfers/${id}`),
+    fetchWithErrorHandling<Transfer>(`${API_BASE_URL}/transfers/${id}`),
 
   // Update transfer status
-  updateTransferStatus: (id: string, status: string) => 
-    fetchWithErrorHandling<any>(`${API_BASE_URL}/transfers/${id}/status`, {
+  updateTransferStatus: (id: string, status: Transfer['status']) => 
+    fetchWithErrorHandling<Transfer>(`${API_BASE_URL}/transfers/${id}/status`, {
       method: 'PUT',
       body: JSON.stringify({ status }),
     }),
@@ -102,5 +104,5 @@ export const transfersService = {
 export const activityService = {
   // Get recent activities
   getRecentActivities: () => 
-    fetchWithErrorHandling<any[]>(`${API_BASE_URL}/activities`),
+    fetchWithErrorHandling<Activity[]>(`${API_BASE_URL}/activities`),
 };

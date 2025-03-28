@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventoryService } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
+import { StockItem } from '@/types';
 
 /**
  * Custom hook for inventory operations using React Query

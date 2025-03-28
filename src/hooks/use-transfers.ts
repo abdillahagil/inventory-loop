@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { transfersService } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
+import { Transfer } from '@/types';
 
 /**
  * Custom hook for transfer operations using React Query
@@ -48,7 +49,7 @@ export function useTransfers() {
   // Update transfer status
   const useUpdateTransferStatus = () => 
     useMutation({
-      mutationFn: ({ id, status }: { id: string; status: string }) => 
+      mutationFn: ({ id, status }: { id: string; status: Transfer['status'] }) => 
         transfersService.updateTransferStatus(id, status),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['transfers'] });
