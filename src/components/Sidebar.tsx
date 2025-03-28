@@ -4,7 +4,7 @@ import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Package, 
-  Transfer, 
+  ArrowLeftRight, 
   ShoppingCart, 
   Users, 
   Settings, 
@@ -20,7 +20,7 @@ const navItems = [
   { name: 'Inventory', icon: <Package size={20} />, path: '/inventory' },
   { name: 'Godowns', icon: <Boxes size={20} />, path: '/godowns' },
   { name: 'Shops', icon: <Store size={20} />, path: '/shops' },
-  { name: 'Transfers', icon: <Transfer size={20} />, path: '/transfers' },
+  { name: 'Transfers', icon: <ArrowLeftRight size={20} />, path: '/transfers' },
   { name: 'Dispatches', icon: <Truck size={20} />, path: '/dispatches' },
   { name: 'Sales', icon: <ShoppingCart size={20} />, path: '/sales' },
   { name: 'Reports', icon: <BarChart size={20} />, path: '/reports' },
