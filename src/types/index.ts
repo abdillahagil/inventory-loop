@@ -1,4 +1,3 @@
-
 /**
  * Represents an inventory stock item in the system
  */
@@ -10,8 +9,11 @@ export interface StockItem {
   location: string;
   quantity: number;
   unit: string;
-  status: 'Low' | 'Normal' | 'High';
+  status: 'Low' | 'Normal' | 'High' | 'assigned';
   lastUpdated: string;
+  price?: number;
+  costPrice?: number;
+  productId?: string;
 }
 
 /**

@@ -1,14 +1,15 @@
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type UserRole = 'superadmin' | 'godownadmin' | 'shopadmin';
+export type UserRole = 'superadmin' | 'godownadmin' | 'shopadmin' | 'staff';
 
 export interface User {
   id: string;
   name: string;
+  email?: string;
   role: UserRole;
   location?: string;
+  locationIds?: string[]; // Array of location IDs for godown admins
 }
 
 interface UserState {

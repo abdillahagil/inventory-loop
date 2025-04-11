@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Select,
@@ -111,9 +110,9 @@ const TransferForm = ({ onCancel }: TransferFormProps) => {
                 <SelectValue placeholder="Select transfer type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="godown-to-godown">Godown to Godown</SelectItem>
-                <SelectItem value="godown-to-shop">Godown to Shop</SelectItem>
-                <SelectItem value="shop-to-shop">Shop to Shop</SelectItem>
+                <SelectItem key="transfer-type-g2g" value="godown-to-godown">Godown to Godown</SelectItem>
+                <SelectItem key="transfer-type-g2s" value="godown-to-shop">Godown to Shop</SelectItem>
+                <SelectItem key="transfer-type-s2s" value="shop-to-shop">Shop to Shop</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -130,15 +129,15 @@ const TransferForm = ({ onCancel }: TransferFormProps) => {
                 <SelectContent>
                   {locationTypes.source === 'Godown' ? (
                     <>
-                      <SelectItem value="godown1">Main Warehouse</SelectItem>
-                      <SelectItem value="godown2">Secondary Warehouse</SelectItem>
-                      <SelectItem value="godown3">Cold Storage Facility</SelectItem>
+                      <SelectItem key="source-godown1" value="godown1">Main Warehouse</SelectItem>
+                      <SelectItem key="source-godown2" value="godown2">Secondary Warehouse</SelectItem>
+                      <SelectItem key="source-godown3" value="godown3">Cold Storage Facility</SelectItem>
                     </>
                   ) : (
                     <>
-                      <SelectItem value="shop1">Downtown Shop</SelectItem>
-                      <SelectItem value="shop2">Mall Branch</SelectItem>
-                      <SelectItem value="shop3">Airport Outlet</SelectItem>
+                      <SelectItem key="source-shop1" value="shop1">Downtown Shop</SelectItem>
+                      <SelectItem key="source-shop2" value="shop2">Mall Branch</SelectItem>
+                      <SelectItem key="source-shop3" value="shop3">Airport Outlet</SelectItem>
                     </>
                   )}
                 </SelectContent>
@@ -156,15 +155,15 @@ const TransferForm = ({ onCancel }: TransferFormProps) => {
                 <SelectContent>
                   {locationTypes.destination === 'Godown' ? (
                     <>
-                      <SelectItem value="godown1">Main Warehouse</SelectItem>
-                      <SelectItem value="godown2">Secondary Warehouse</SelectItem>
-                      <SelectItem value="godown3">Cold Storage Facility</SelectItem>
+                      <SelectItem key="dest-godown1" value="godown1">Main Warehouse</SelectItem>
+                      <SelectItem key="dest-godown2" value="godown2">Secondary Warehouse</SelectItem>
+                      <SelectItem key="dest-godown3" value="godown3">Cold Storage Facility</SelectItem>
                     </>
                   ) : (
                     <>
-                      <SelectItem value="shop1">Downtown Shop</SelectItem>
-                      <SelectItem value="shop2">Mall Branch</SelectItem>
-                      <SelectItem value="shop3">Airport Outlet</SelectItem>
+                      <SelectItem key="dest-shop1" value="shop1">Downtown Shop</SelectItem>
+                      <SelectItem key="dest-shop2" value="shop2">Mall Branch</SelectItem>
+                      <SelectItem key="dest-shop3" value="shop3">Airport Outlet</SelectItem>
                     </>
                   )}
                 </SelectContent>
@@ -196,10 +195,10 @@ const TransferForm = ({ onCancel }: TransferFormProps) => {
                       <SelectValue placeholder="Select product" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="product1">Laptop</SelectItem>
-                      <SelectItem value="product2">Smartphone</SelectItem>
-                      <SelectItem value="product3">Headphones</SelectItem>
-                      <SelectItem value="product4">Monitor</SelectItem>
+                      <SelectItem key={`product1-${item.id}`} value="product1">Laptop</SelectItem>
+                      <SelectItem key={`product2-${item.id}`} value="product2">Smartphone</SelectItem>
+                      <SelectItem key={`product3-${item.id}`} value="product3">Headphones</SelectItem>
+                      <SelectItem key={`product4-${item.id}`} value="product4">Monitor</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -223,9 +222,9 @@ const TransferForm = ({ onCancel }: TransferFormProps) => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pcs">pcs</SelectItem>
-                      <SelectItem value="boxes">boxes</SelectItem>
-                      <SelectItem value="kg">kg</SelectItem>
+                      <SelectItem key={`unit-pcs-${item.id}`} value="pcs">pcs</SelectItem>
+                      <SelectItem key={`unit-boxes-${item.id}`} value="boxes">boxes</SelectItem>
+                      <SelectItem key={`unit-kg-${item.id}`} value="kg">kg</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

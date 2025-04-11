@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
@@ -8,7 +7,7 @@ import {
   ShoppingCart, 
   Users, 
   Settings, 
-  Boxes, 
+  Warehouse, 
   Store,
   BarChart, 
   FileText,
@@ -36,7 +35,7 @@ const Sidebar = () => {
     },
     { 
       name: 'Godowns', 
-      icon: <Boxes size={20} />, 
+      icon: <Warehouse size={20} />, 
       path: '/godowns',
       roles: ['superadmin', 'godownadmin']
     },

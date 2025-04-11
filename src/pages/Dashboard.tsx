@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useToast } from '@/hooks/use-toast';
 import StatCard from '@/components/StatCard';
@@ -8,6 +7,7 @@ import { Package, ShoppingCart, ArrowDownUp, AlertCircle } from 'lucide-react';
 import { useInventory } from '@/hooks/use-inventory';
 import { activityService } from '@/services/api';
 import { useQuery } from '@tanstack/react-query';
+import { useUserStore } from '@/store/userStore';
 
 // Fallback sample data in case the API is not available
 const sampleInventoryData = [
@@ -29,6 +29,8 @@ const sampleActivities = [
 const Dashboard = () => {
   const { toast } = useToast();
   const { useLowStockItems } = useInventory();
+  const { user } = useUserStore();
+  const isSuperAdmin = user?.role === 'superadmin';
   
   // Fetch low stock items from API
   const { data: lowStockItems, isLoading: isLoadingLowStock, error: lowStockError } = useLowStockItems();
@@ -44,7 +46,7 @@ const Dashboard = () => {
     setTimeout(() => {
       toast({
         title: "Low Stock Alert",
-        description: "iPhone 13 Pro is running low on inventory (5 units left)",
+        description: "iPhone 13 Pro is running low on inventory (5 left)",
         variant: "destructive",
       });
     }, 1500);
@@ -69,7 +71,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
           title="Total Inventory" 
-          value="1,245 items" 
+          value="1,245" 
           icon={<Package size={24} />}
           trend={{ value: 8, isPositive: true }}
         />
@@ -98,6 +100,7 @@ const Dashboard = () => {
             title="Low Stock Items"
             items={displayedLowStockItems}
             isLoading={isLoadingLowStock}
+            hideCostPrice={!isSuperAdmin}
           />
         </div>
         <div>

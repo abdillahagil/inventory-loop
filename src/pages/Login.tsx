@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { User, Lock, Building, Store } from 'lucide-react';
+import { User, Lock, Building, Store, Loader2 } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { 
@@ -18,11 +17,12 @@ import {
 } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useUserStore } from '@/store/userStore';
+import { useUserStore, UserRole } from '@/store/userStore';
+import { authAPI } from '@/services/api';
 
 // Form validation schema
 const loginSchema = z.object({
-  username: z.string().min(3, { message: 'Username must be at least 3 characters' }),
+  email: z.string().email({ message: 'Please enter a valid email address' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
   userType: z.enum(['superadmin', 'godownadmin', 'shopadmin'])
 });
@@ -38,48 +38,49 @@ const Login = () => {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: '',
+      email: '',
       password: '',
       userType: 'superadmin'
     }
   });
 
-  // Mock user data for demo purposes
-  const mockUsers = [
-    { username: 'superadmin', password: 'password123', type: 'superadmin' },
-    { username: 'godown1', password: 'password123', type: 'godownadmin', location: 'Main Warehouse' },
-    { username: 'godown2', password: 'password123', type: 'godownadmin', location: 'Secondary Warehouse' },
-    { username: 'shop1', password: 'password123', type: 'shopadmin', location: 'Downtown Shop' },
-    { username: 'shop2', password: 'password123', type: 'shopadmin', location: 'Mall Branch' }
-  ];
-
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
     
-    // Simulate API request
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const user = mockUsers.find(
-      u => u.username === values.username && 
-           u.password === values.password && 
-           u.type === values.userType
-    );
-    
-    if (user) {
-      login({
-        id: user.username,
-        name: user.username,
-        role: user.type,
-        location: 'location' in user ? user.location : undefined
+    try {
+      // Call the API for authentication
+      const userData = await authAPI.login({
+        email: values.email,
+        password: values.password,
+        userType: values.userType
       });
       
-      toast.success(`Welcome back, ${user.username}!`);
+      // Debug the user data received from the server
+      console.log('Login API response userData:', userData);
+      
+      // Store token in localStorage
+      localStorage.setItem('token', userData.token);
+      
+      // For debugging purposes
+      const userForStore = {
+        id: userData.id,
+        name: userData.name,
+        role: userData.role as UserRole,
+        location: userData.location
+      };
+      console.log('Storing user in store:', userForStore);
+      
+      // Update state
+      login(userForStore);
+      
+      toast.success(`Welcome back, ${userData.name}!`);
       navigate('/');
-    } else {
-      toast.error('Invalid credentials. Please try again.');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Login failed. Please try again.';
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   return (
@@ -143,14 +144,19 @@ const Login = () => {
               
               <FormField
                 control={form.control}
-                name="username"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Username</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input placeholder="Enter your username" className="pl-10" {...field} />
+                        <Input 
+                          type="email" 
+                          placeholder="Enter your email" 
+                          className="pl-10" 
+                          {...field} 
+                        />
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -191,11 +197,13 @@ const Login = () => {
           </Form>
         </CardContent>
         <CardFooter className="flex flex-col">
-          <div className="text-sm text-muted-foreground text-center w-full">
-            <p className="mb-2">Demo Accounts:</p>
-            <p>Super Admin: superadmin / password123</p>
-            <p>Godown Admin: godown1 / password123</p>
-            <p>Shop Admin: shop1 / password123</p>
+          <div className="mt-4 text-center w-full">
+            <p className="text-sm">
+              Don't have an account?{' '}
+              <Link to="/register" className="text-blue-600 hover:underline">
+                Register here
+              </Link>
+            </p>
           </div>
         </CardFooter>
       </Card>

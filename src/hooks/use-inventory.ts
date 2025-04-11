@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventoryService } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
@@ -51,14 +50,25 @@ export function useInventory() {
     useMutation({
       mutationFn: ({ id, updates }: { id: string; updates: Partial<StockItem> }) => 
         inventoryService.updateInventoryItem(id, updates),
-      onSuccess: () => {
+      onSuccess: (data) => {
+        console.log('Update success in hook with data:', data);
+        // Force a full refresh to ensure we get the latest data
         queryClient.invalidateQueries({ queryKey: ['inventory'] });
+        // Update the cache directly as well for immediate UI update
+        queryClient.setQueryData(['inventory'], (oldData: StockItem[] | undefined) => {
+          if (!oldData) return oldData;
+          return oldData.map(item => 
+            item.id === data.id ? { ...item, ...data } : item
+          );
+        });
+        
         toast({
           title: 'Success',
           description: 'Inventory item updated successfully',
         });
       },
       onError: (error: Error) => {
+        console.error('Update error in hook:', error);
         toast({
           title: 'Error',
           description: `Failed to update item: ${error.message}`,
