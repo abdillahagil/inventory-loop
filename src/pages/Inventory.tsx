@@ -24,6 +24,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 const Inventory = () => {
+  // State for product/category/location filters
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedLocation, setSelectedLocation] = useState<string>('');
   const { useAllInventory, useAddInventoryItem, useUpdateInventoryItem, useDeleteInventoryItem } = useInventory();
   const { data: inventoryItems, isLoading, refetch } = useAllInventory();
   const addInventoryMutation = useAddInventoryItem();
@@ -478,7 +481,6 @@ const Inventory = () => {
           <div className="truncate">
             <h3 className="text-gray-500 text-xs truncate">Total Products</h3>
             <p className="text-lg font-semibold">{items.length}</p>
-            <p className="text-[10px] text-gray-400 truncate">All inventory</p>
           </div>
         </div>
         <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0">
@@ -488,7 +490,6 @@ const Inventory = () => {
           <div className="truncate">
             <h3 className="text-gray-500 text-xs truncate">Total Stock</h3>
             <p className="text-lg font-semibold">{totalItems}</p>
-            <p className="text-[10px] text-gray-400 truncate">All units</p>
           </div>
         </div>
         <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0">
@@ -498,7 +499,6 @@ const Inventory = () => {
           <div className="truncate">
             <h3 className="text-gray-500 text-xs truncate">Low Stock</h3>
             <p className="text-lg font-semibold">{lowStockItems.length}</p>
-            <p className="text-[10px] text-gray-400 truncate">Requires attention</p>
           </div>
         </div>
         {isGodownAdmin && (
@@ -509,28 +509,14 @@ const Inventory = () => {
             <div className="truncate">
               <h3 className="text-gray-500 text-xs truncate">Unassigned</h3>
               <p className="text-lg font-semibold">{unassignedItems.length}</p>
-              <p className="text-[10px] text-gray-400 truncate">Waiting for assignment</p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Search */}
-      <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search products..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Product tabs for GodownAdmin */}
+      {/* Product tabs for GodownAdmin - moved above table */}
       {isGodownAdmin && (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-2">
           <TabsList>
             <TabsTrigger value="all-products">All Products</TabsTrigger>
             <TabsTrigger value="unassigned">Unassigned ({unassignedItems.length})</TabsTrigger>
@@ -539,6 +525,7 @@ const Inventory = () => {
         </Tabs>
       )}
 
+      {/* StockTable with search and filters */}
       <div>
         <StockTable
           title={`Products (${filteredItems.length})`}
@@ -551,6 +538,14 @@ const Inventory = () => {
           hideEditButton={() => !(isSuperAdmin || isGodownAdmin)}
           hideDeleteButton={() => !(isSuperAdmin || isGodownAdmin)}
           hideCostPrice={!isSuperAdmin}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          categoryOptions={[...new Set(items.map(i => i.category).filter(Boolean))]}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          locationOptions={[...new Set(items.map(i => i.location).filter(Boolean))]}
+          selectedLocation={selectedLocation}
+          setSelectedLocation={setSelectedLocation}
         />
       </div>
 

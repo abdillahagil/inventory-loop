@@ -25,6 +25,14 @@ interface StockTableProps {
   hideEditButton?: (item: StockItem) => boolean;
   hideDeleteButton?: (item: StockItem) => boolean;
   hideCostPrice?: boolean;
+  searchQuery?: string;
+  setSearchQuery?: (q: string) => void;
+  categoryOptions?: string[];
+  selectedCategory?: string;
+  setSelectedCategory?: (c: string) => void;
+  locationOptions?: string[];
+  selectedLocation?: string;
+  setSelectedLocation?: (l: string) => void;
 }
 
 function StockTable({
@@ -37,163 +45,203 @@ function StockTable({
   showAssignButton = false,
   hideEditButton = () => false,
   hideDeleteButton = () => false,
-  hideCostPrice = false
+  hideCostPrice = false,
+  searchQuery = '',
+  setSearchQuery,
+  categoryOptions = [],
+  selectedCategory = '',
+  setSelectedCategory,
+  locationOptions = [],
+  selectedLocation = '',
+  setSelectedLocation
 }: StockTableProps) {
+  // Filter items based on search, category, and location
+  const filteredItems = items.filter(item => {
+    const matchesSearch = !searchQuery || item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = !selectedCategory || item.category === selectedCategory;
+    const matchesLocation = !selectedLocation || item.location === selectedLocation;
+    return matchesSearch && matchesCategory && matchesLocation;
+  });
+
   return (
     <div>
-      <div className="stock-card">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">{title}</h2>
-          <div className="flex items-center space-x-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-              <input
-                type="text"
-                placeholder="Search items..."
-                className="pl-9 pr-4 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-stock-blue-500 w-48"
-              />
-            </div>
-            <button className="flex items-center p-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50">
-              <Filter size={16} className="mr-1" />
-              Filter
-            </button>
+      {/* Always show search and filter bar, even if no products */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-2">
+        <h2 className="text-lg font-semibold whitespace-nowrap">{title}</h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+            <input
+              type="text"
+              placeholder="Search products..."
+              className="pl-9 pr-4 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-stock-blue-500 w-44"
+              value={searchQuery}
+              onChange={e => setSearchQuery && setSearchQuery(e.target.value)}
+            />
           </div>
+          {/* Category Filter - always visible and enabled */}
+          {setSelectedCategory && (
+            <select
+              className="border border-gray-300 rounded-md py-1.5 px-2 text-sm focus:outline-none focus:ring-1 focus:ring-stock-blue-500"
+              value={selectedCategory}
+              onChange={e => setSelectedCategory(e.target.value)}
+              disabled={false}
+            >
+              <option value="">All Categories</option>
+              {categoryOptions.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          )}
+          {/* Location Filter - always visible and enabled */}
+          {setSelectedLocation && (
+            <select
+              className="border border-gray-300 rounded-md py-1.5 px-2 text-sm focus:outline-none focus:ring-1 focus:ring-stock-blue-500"
+              value={selectedLocation}
+              onChange={e => setSelectedLocation(e.target.value)}
+              disabled={false}
+            >
+              <option value="">All Locations</option>
+              {locationOptions.map(loc => (
+                <option key={loc} value={loc}>{loc}</option>
+              ))}
+            </select>
+          )}
         </div>
-        <div className="overflow-x-auto">
-          <table className="data-table w-full">
-            <thead>
-              <tr>
-                <th className="whitespace-nowrap" style={{ width: '18%' }}>Name</th>
-                <th className="text-left" style={{ width: '14%' }}>Category</th>
-                <th className="text-right" style={{ width: '10%' }}>Quantity</th>
-                {!hideCostPrice && <th className="text-right" style={{ width: '12%' }}>Cost Price</th>}
-                <th className="text-right" style={{ width: '12%' }}>Price</th>
-                <th style={{ width: '10%' }}>Status</th>
-                <th style={{ width: '12%' }}>Location</th>
-                <th style={{ width: '12%' }}>Last Updated</th>
-                <th style={{ width: '10%' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading
-                ? Array(5).fill(0).map((_, index) => (
-                  <tr key={`loading-${index}`}>
-                    <td><Skeleton className="h-5 w-full" /></td>
-                    <td><Skeleton className="h-5 w-full" /></td>
-                    {hideCostPrice ? null : <td><Skeleton className="h-5 w-full" /></td>}
-                    <td><Skeleton className="h-5 w-full" /></td>
-                    <td><Skeleton className="h-5 w-full" /></td>
-                    <td><Skeleton className="h-5 w-full" /></td>
-                    <td><Skeleton className="h-5 w-20" /></td>
-                    <td><Skeleton className="h-5 w-full" /></td>
-                    <td><Skeleton className="h-5 w-full" /></td>
-                  </tr>
-                ))
-                : items.length > 0 ? items.map((item, idx) => {
-                  const cells = [];
-                  cells.push(<td key="name" className="font-medium">{item.name}</td>);
-                  cells.push(<td key="cat" className="text-left">{item.category || '-'}</td>);
-                  cells.push(<td key="qty" className="text-right">{item.quantity}</td>);
-                  if (!hideCostPrice) {
-                    cells.push(
-                      <td key="cost" className="text-right">
-                        {item.costPrice ? (typeof item.costPrice === 'number'
-                          ? `$${item.costPrice.toFixed(2)}`
-                          : `$${item.costPrice}`) : '-'}
-                      </td>
-                    );
-                  }
+      </div>
+      <div className="overflow-x-auto" style={{ overflowY: 'scroll', maxHeight: '500px', minHeight: '300px', height: '400px' }}>
+        <table className="data-table w-full">
+          <thead>
+            <tr>
+              <th className="whitespace-nowrap text-center" style={{ width: '18%' }}>Name</th>
+              <th className="text-center" style={{ width: '14%' }}>Category</th>
+              <th className="text-center" style={{ width: '10%' }}>Quantity</th>
+              {!hideCostPrice && <th className="text-center" style={{ width: '12%' }}>Cost Price</th>}
+              <th className="text-center" style={{ width: '12%' }}>Price</th>
+              <th className="text-center" style={{ width: '10%' }}>Status</th>
+              <th className="text-center" style={{ width: '12%' }}>Location</th>
+              <th className="text-center" style={{ width: '12%' }}>Last Updated</th>
+              <th className="text-center" style={{ width: '10%' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading
+              ? Array(5).fill(0).map((_, index) => (
+                <tr key={`loading-${index}`}>
+                  <td className="text-center"><Skeleton className="h-5 w-full" /></td>
+                  <td className="text-center"><Skeleton className="h-5 w-full" /></td>
+                  {hideCostPrice ? null : <td className="text-center"><Skeleton className="h-5 w-full" /></td>}
+                  <td className="text-center"><Skeleton className="h-5 w-full" /></td>
+                  <td className="text-center"><Skeleton className="h-5 w-full" /></td>
+                  <td className="text-center"><Skeleton className="h-5 w-20" /></td>
+                  <td className="text-center"><Skeleton className="h-5 w-full" /></td>
+                  <td className="text-center"><Skeleton className="h-5 w-full" /></td>
+                </tr>
+              ))
+              : filteredItems.length > 0 ? filteredItems.map((item, idx) => {
+                const cells = [];
+                cells.push(<td key="name" className="font-medium text-center">{item.name}</td>);
+                cells.push(<td key="cat" className="text-center">{item.category || '-'}</td>);
+                cells.push(<td key="qty" className="text-center">{item.quantity}</td>);
+                if (!hideCostPrice) {
                   cells.push(
-                    <td key="price" className="text-right">
-                      {item.price && item.costPrice ? (
-                        <div className="flex items-center justify-end group relative">
-                          <span className={`inline-block w-2 h-2 rounded-full mr-1.5 ${safeNumber(item.price) > safeNumber(item.costPrice) * 1.3
-                            ? 'bg-green-500'
-                            : safeNumber(item.price) > safeNumber(item.costPrice) * 1.1
-                              ? 'bg-amber-500'
-                              : 'bg-red-500'
-                            }`}></span>
-                          <span>{typeof item.price === 'number'
-                            ? `$${item.price.toFixed(2)}`
-                            : `$${item.price}`}</span>
-                        </div>
-                      ) : item.price ? (typeof item.price === 'number'
-                        ? `$${item.price.toFixed(2)}`
-                        : `$${item.price}`) : '-'}
+                    <td key="cost" className="text-center">
+                      {item.costPrice ? (typeof item.costPrice === 'number'
+                        ? `$${item.costPrice.toFixed(2)}`
+                        : `$${item.costPrice}`) : '-'}
                     </td>
                   );
-                  cells.push(
-                    <td key="status">
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${item.status === 'Low'
-                        ? 'bg-alert-red text-white'
-                        : item.status === 'High'
-                          ? 'bg-alert-amber text-white'
-                          : 'bg-alert-green text-white'
-                        }`}>
-                        {item.status}
-                      </span>
-                    </td>
-                  );
-                  cells.push(
-                    <td key="loc">{item.location}</td>
-                  );
-                  cells.push(
-                    <td key="last">{item.lastUpdated}</td>
-                  );
-                  cells.push(
-                    <td key="actions">
-                      <div className="flex items-center space-x-2">
-                        {showAssignButton && item.location === 'Unassigned' && onAssignClick && (
-                          <button
-                            onClick={() => onAssignClick(item)}
-                            className="text-sm text-blue-500 hover:text-blue-700"
-                            title="Assign to godown"
-                          >
-                            <Warehouse size={16} />
-                          </button>
-                        )}
-                        {onEditClick && !hideEditButton(item) && (
-                          <button
-                            onClick={() => onEditClick(item)}
-                            className="text-sm text-gray-500 hover:text-gray-700"
-                          >
-                            <Edit size={16} />
-                          </button>
-                        )}
-                        {onDeleteClick && !hideDeleteButton(item) && (
-                          <button
-                            onClick={() => onDeleteClick(item)}
-                            className="text-sm text-gray-500 hover:text-gray-700"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        )}
+                }
+                cells.push(
+                  <td key="price" className="text-center">
+                    {item.price && item.costPrice ? (
+                      <div className="flex items-center justify-center group relative">
+                        <span className={`inline-block w-2 h-2 rounded-full mr-1.5 ${safeNumber(item.price) > safeNumber(item.costPrice) * 1.3
+                          ? 'bg-green-500'
+                          : safeNumber(item.price) > safeNumber(item.costPrice) * 1.1
+                            ? 'bg-amber-500'
+                            : 'bg-red-500'
+                          }`}></span>
+                        <span>{typeof item.price === 'number'
+                          ? `$${item.price.toFixed(2)}`
+                          : `$${item.price}`}</span>
                       </div>
-                    </td>
-                  );
-                  return <tr key={item.id || idx}>{cells}</tr>;
-                }) : (
-                  <tr>
-                    <td colSpan={hideCostPrice ? 8 : 9} className="text-center py-4 text-gray-500">
-                      No items found
-                    </td>
-                  </tr>
-                )}
-            </tbody>
-          </table>
+                    ) : item.price ? (typeof item.price === 'number'
+                      ? `$${item.price.toFixed(2)}`
+                      : `$${item.price}`) : '-'}
+                  </td>
+                );
+                cells.push(
+                  <td key="status" className="text-center">
+                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${item.status === 'Low'
+                      ? 'bg-alert-red text-white'
+                      : item.status === 'High'
+                        ? 'bg-alert-amber text-white'
+                        : 'bg-alert-green text-white'
+                      }`}>
+                      {item.status}
+                    </span>
+                  </td>
+                );
+                cells.push(
+                  <td key="loc" className="text-center">{item.location}</td>
+                );
+                cells.push(
+                  <td key="last" className="text-center">{item.lastUpdated}</td>
+                );
+                cells.push(
+                  <td key="actions" className="text-center">
+                    <div className="flex items-center space-x-2 justify-center">
+                      {showAssignButton && item.location === 'Unassigned' && onAssignClick && (
+                        <button
+                          onClick={() => onAssignClick(item)}
+                          className="text-sm text-blue-500 hover:text-blue-700"
+                          title="Assign to godown"
+                        >
+                          <Warehouse size={16} />
+                        </button>
+                      )}
+                      {onEditClick && !hideEditButton(item) && (
+                        <button
+                          onClick={() => onEditClick(item)}
+                          className="text-sm text-gray-500 hover:text-gray-700"
+                        >
+                          <Edit size={16} />
+                        </button>
+                      )}
+                      {onDeleteClick && !hideDeleteButton(item) && (
+                        <button
+                          onClick={() => onDeleteClick(item)}
+                          className="text-sm text-gray-500 hover:text-gray-700"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                );
+                return <tr key={item.id || idx}>{cells}</tr>;
+              }) : (
+                <tr>
+                  <td colSpan={hideCostPrice ? 8 : 9} className="text-center py-4 text-gray-500">
+                    No items found
+                  </td>
+                </tr>
+              )}
+          </tbody>
+        </table>
+      </div>
+      <div className="mt-4 flex justify-between items-center text-sm">
+        <div className="text-gray-500">
+          {isLoading ? (
+            <Skeleton className="h-4 w-32" />
+          ) : (
+            `Showing 1-${filteredItems.length} of ${filteredItems.length} items`
+          )}
         </div>
-        <div className="mt-4 flex justify-between items-center text-sm">
-          <div className="text-gray-500">
-            {isLoading ? (
-              <Skeleton className="h-4 w-32" />
-            ) : (
-              `Showing 1-${items.length} of ${items.length} items`
-            )}
-          </div>
-          <div className="flex space-x-1">
-            <button className="px-3 py-1 border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-50" disabled>Previous</button>
-            <button className="px-3 py-1 border border-gray-300 rounded-md bg-white hover:bg-gray-50">Next</button>
-          </div>
+        <div className="flex space-x-1">
+          <button className="px-3 py-1 border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-50" disabled>Previous</button>
+          <button className="px-3 py-1 border border-gray-300 rounded-md bg-white hover:bg-gray-50">Next</button>
         </div>
       </div>
     </div>
