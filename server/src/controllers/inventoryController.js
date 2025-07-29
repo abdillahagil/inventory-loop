@@ -8,12 +8,12 @@ const getInventory = async (req, res) => {
   try {
     // For godown and shop admins, show their location's inventory and unassigned items if they're godown admin
     let whereClause = {};
-    
+
     if (req.user.role === 'godownadmin' && req.user.location) {
       // Parse the comma-separated godown names from the user's location
       const assignedGodownNames = req.user.location.split(',').map(name => name.trim());
       console.log('Godown admin assigned locations:', assignedGodownNames);
-      
+
       // GodownAdmin can see their assigned location inventory AND unassigned inventory
       whereClause = {
         [Op.or]: [
@@ -26,7 +26,7 @@ const getInventory = async (req, res) => {
       whereClause = { location: req.user.location };
     }
     // SuperAdmin can see all inventory (empty whereClause)
-    
+
     const inventory = await Inventory.findAll({
       where: whereClause,
       include: [{
@@ -35,7 +35,7 @@ const getInventory = async (req, res) => {
         attributes: ['id', 'name', 'sku', 'category', 'imageUrl', 'price', 'costPrice']
       }]
     });
-    
+
     // Transform data to include product details directly
     const transformedInventory = inventory.map(item => ({
       id: item.id,
@@ -51,7 +51,7 @@ const getInventory = async (req, res) => {
       costPrice: item.product.costPrice,
       productId: item.productId
     }));
-    
+
     res.json(transformedInventory);
   } catch (error) {
     console.error('Get inventory error:', error);
@@ -66,12 +66,12 @@ const getLowStockItems = async (req, res) => {
   try {
     // For godown and shop admins, only show their location's inventory
     let whereClause = {};
-    
+
     if (req.user.role === 'godownadmin' && req.user.location) {
       // Parse the comma-separated godown names from the user's location
       const assignedGodownNames = req.user.location.split(',').map(name => name.trim());
       console.log('Godown admin assigned locations for low stock check:', assignedGodownNames);
-      
+
       // Find low stock items in any of the assigned godowns
       whereClause.location = { [Op.in]: assignedGodownNames };
     } else if (req.user.role === 'shopadmin' && req.user.location) {
@@ -79,7 +79,7 @@ const getLowStockItems = async (req, res) => {
       whereClause.location = req.user.location;
     }
     // SuperAdmin can see all low stock items (empty whereClause)
-    
+
     // Add condition to only get items where quantity <= minimumStockLevel
     const inventory = await Inventory.findAll({
       where: {
@@ -94,7 +94,7 @@ const getLowStockItems = async (req, res) => {
         attributes: ['id', 'name', 'sku', 'category', 'imageUrl']
       }]
     });
-    
+
     res.json(inventory);
   } catch (error) {
     console.error('Get low stock items error:', error);
@@ -114,11 +114,11 @@ const getInventoryById = async (req, res) => {
         attributes: ['id', 'name', 'sku', 'category', 'imageUrl']
       }]
     });
-    
+
     if (!inventory) {
       return res.status(404).json({ message: 'Inventory item not found' });
     }
-    
+
     // Check if user has access to this inventory location
     if (req.user.role === 'superadmin') {
       // Super admin can access all inventory
@@ -126,7 +126,7 @@ const getInventoryById = async (req, res) => {
       // Parse the comma-separated godown names from the user's location
       const assignedGodownNames = req.user.location.split(',').map(name => name.trim());
       console.log('Godown admin assigned locations:', assignedGodownNames);
-      
+
       // Allow godown admins to access their assigned godowns and Unassigned items
       if (inventory.location !== 'Unassigned' && !assignedGodownNames.includes(inventory.location)) {
         return res.status(403).json({ message: 'Not authorized to access this inventory location' });
@@ -135,7 +135,7 @@ const getInventoryById = async (req, res) => {
       // Shop admins can only access their assigned shop
       return res.status(403).json({ message: 'Not authorized to access this inventory location' });
     }
-    
+
     res.json(inventory);
   } catch (error) {
     console.error('Get inventory by id error:', error);
@@ -149,18 +149,18 @@ const getInventoryById = async (req, res) => {
 const createInventory = async (req, res) => {
   try {
     const { productId, location, quantity, minimumStockLevel, price, costPrice, name, sku, category } = req.body;
-    
+
     let product;
-    
+
     // If product ID is provided, use existing product
     if (productId) {
-    // Check if product exists
+      // Check if product exists
       product = await Product.findByPk(productId);
-    
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+
+      if (!product) {
+        return res.status(404).json({ message: 'Product not found' });
       }
-      
+
       // For superadmins, they can use any location
       if (req.user.role === 'superadmin') {
         // No location check required
@@ -170,30 +170,30 @@ const createInventory = async (req, res) => {
         // Parse the comma-separated godown names from the user's location
         const assignedGodownNames = req.user.location.split(',').map(name => name.trim());
         console.log('Godown admin assigned locations for create inventory:', assignedGodownNames);
-        
+
         // Check if the provided location is one of their assigned godowns
         if (!assignedGodownNames.includes(location)) {
-          return res.status(403).json({ 
+          return res.status(403).json({
             message: 'You can only create inventory for your assigned locations'
           });
         }
       }
       // For shop admins, they can only create inventory for their own shop
       else if (req.user.role === 'shopadmin' && req.user.location !== location) {
-        return res.status(403).json({ 
+        return res.status(403).json({
           message: 'You can only create inventory for your own location'
         });
       }
-    } 
+    }
     // If productId is not provided and it's a superadmin, create a new product
     else if (req.user.role === 'superadmin' && name && sku) {
       // Check if product with same SKU already exists
       const productExists = await Product.findOne({ where: { sku } });
-      
+
       if (productExists) {
         return res.status(400).json({ message: 'Product with this SKU already exists' });
       }
-      
+
       // Create new product
       product = await Product.create({
         name,
@@ -204,29 +204,29 @@ const createInventory = async (req, res) => {
         isActive: true
       });
     } else {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: 'Either a valid productId or product details (name, sku) must be provided'
       });
     }
-    
+
     // Allow superadmins to create unassigned inventory items
     const inventoryLocation = location || (req.user.role === 'superadmin' ? 'Unassigned' : null);
-    
+
     if (!inventoryLocation) {
       return res.status(400).json({ message: 'Location is required' });
     }
-    
+
     // Check if inventory for this product at this location already exists
     const inventoryExists = await Inventory.findOne({
       where: { productId: product.id, location: inventoryLocation }
     });
-    
+
     if (inventoryExists) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: 'Inventory for this product at this location already exists'
       });
     }
-    
+
     // Create inventory item with product name
     const inventory = await Inventory.create({
       productId: product.id,
@@ -236,7 +236,7 @@ const createInventory = async (req, res) => {
       minimumStockLevel: minimumStockLevel || 10,
       lastUpdatedBy: req.user.id
     });
-    
+
     res.status(201).json({
       ...inventory.toJSON(),
       product: product.toJSON()
@@ -253,27 +253,27 @@ const createInventory = async (req, res) => {
 const updateInventory = async (req, res) => {
   try {
     console.log('Received update request with body:', req.body);
-    
+
     const inventory = await Inventory.findByPk(req.params.id, {
       include: [{
         model: Product,
         as: 'product',
       }]
     });
-    
+
     if (!inventory) {
       return res.status(404).json({ message: 'Inventory item not found' });
     }
-    
+
     console.log('Found inventory item:', inventory.id);
     console.log('Associated product:', inventory.product ? inventory.product.id : 'None');
-    
+
     // Check if user has access to update this inventory
     // SuperAdmin can update anything
     // GodownAdmin can update items in their location AND assign unassigned items to any godown
     // ShopAdmin can only update their location items
     let canUpdate = false;
-    
+
     // Extensive debug logging
     console.log('--------- Authorization Check Debug ---------');
     console.log('User role:', req.user.role);
@@ -282,7 +282,7 @@ const updateInventory = async (req, res) => {
     console.log('Inventory location:', inventory.location);
     console.log('Requested location change:', req.body.location);
     console.log('------------------------------------------');
-    
+
     if (req.user.role === 'superadmin') {
       console.log('Access granted: User is superadmin');
       canUpdate = true;
@@ -298,15 +298,15 @@ const updateInventory = async (req, res) => {
         // Parse the comma-separated godown names from the user's location
         const assignedGodownNames = req.user.location.split(',').map(name => name.trim());
         console.log('Godown admin assigned locations:', assignedGodownNames);
-        
+
         // Check if the inventory location is in the assigned godowns
         if (assignedGodownNames.includes(inventory.location)) {
           console.log('Access granted: Godown admin updating one of their assigned locations');
-        canUpdate = true;
+          canUpdate = true;
         } else {
           console.log('Access denied: Location not in assigned godowns');
         }
-      } 
+      }
       else {
         console.log('Access denied: Location mismatch and not unassigned');
       }
@@ -316,27 +316,28 @@ const updateInventory = async (req, res) => {
     } else {
       console.log('Access denied: No matching rule');
     }
-    
+
     if (!canUpdate) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         message: 'Not authorized to update this inventory location'
       });
     }
-    
+
     const { quantity, minimumStockLevel, name, price, costPrice, location, originalQuantity, productId } = req.body;
-    
-    console.log('Extracted fields from request:', { quantity, minimumStockLevel, name, price, costPrice, location, originalQuantity, productId });
-    
+
+    const { category } = req.body;
+    console.log('Extracted fields from request:', { quantity, minimumStockLevel, name, price, costPrice, location, originalQuantity, productId, category });
+
     // Start a transaction to ensure data consistency
     const transaction = await sequelize.transaction();
-    
+
     try {
       // Check if this is a partial assignment from Unassigned to a godown
-      if (inventory.location === 'Unassigned' && location && location !== 'Unassigned' && 
-          quantity && originalQuantity && quantity < originalQuantity) {
-        
+      if (inventory.location === 'Unassigned' && location && location !== 'Unassigned' &&
+        quantity && originalQuantity && quantity < originalQuantity) {
+
         console.log('Processing partial assignment from Unassigned to godown');
-        
+
         // 1. Create a new inventory record for the godown with the specified quantity
         const newInventory = await Inventory.create({
           productId: inventory.productId,
@@ -345,42 +346,37 @@ const updateInventory = async (req, res) => {
           minimumStockLevel: inventory.minimumStockLevel,
           lastUpdatedBy: req.user.id
         }, { transaction });
-        
+
         console.log('Created new inventory record for godown:', newInventory.id);
-        
+
         // 2. Update the original unassigned inventory with the remaining quantity
         const remainingQuantity = originalQuantity - quantity;
         await inventory.update({
           quantity: remainingQuantity
         }, { transaction });
-        
+
         console.log('Updated original inventory with remaining quantity:', remainingQuantity);
-        
+
         // 3. Update associated product if needed
-        if (name !== undefined || price !== undefined || costPrice !== undefined) {
-          console.log('Updating product fields:', { name, price, costPrice });
-          
+        if (name !== undefined || price !== undefined || costPrice !== undefined || category !== undefined) {
+          console.log('Updating product fields:', { name, price, costPrice, category });
           // Convert price and costPrice to proper decimal values
           const parsedPrice = price !== undefined ? parseFloat(price) : undefined;
           const parsedCostPrice = costPrice !== undefined ? parseFloat(costPrice) : undefined;
-          
           console.log('Parsed price values:', { parsedPrice, parsedCostPrice });
-          
           if (!inventory.product) {
             console.log('No product associated with inventory in the initial query. Fetching product directly...');
             // If product not included in the inventory query result, fetch it separately
             const productId = inventory.productId;
             console.log('Product ID from inventory record:', productId);
-            
             const product = await Product.findByPk(productId, { transaction });
-            
             if (product) {
               console.log('Found product to update:', product.id, 'with current values:', {
                 name: product.name,
                 price: product.price,
-                costPrice: product.costPrice
+                costPrice: product.costPrice,
+                category: product.category
               });
-              
               if (name !== undefined) {
                 product.name = name;
                 // Also update the name in the inventory record
@@ -388,12 +384,13 @@ const updateInventory = async (req, res) => {
               }
               if (parsedPrice !== undefined) product.price = parsedPrice;
               if (parsedCostPrice !== undefined) product.costPrice = parsedCostPrice;
-              
+              if (category !== undefined) product.category = category;
               await product.save({ transaction });
               console.log('Saved product changes. New values:', {
                 name: product.name,
                 price: product.price,
-                costPrice: product.costPrice
+                costPrice: product.costPrice,
+                category: product.category
               });
             } else {
               console.log('No product found for ID:', productId);
@@ -401,13 +398,12 @@ const updateInventory = async (req, res) => {
           } else {
             console.log('Product already loaded with inventory:', inventory.product.id);
             const product = inventory.product;
-            
             console.log('Current product values:', {
               name: product.name,
               price: product.price,
-              costPrice: product.costPrice
+              costPrice: product.costPrice,
+              category: product.category
             });
-            
             if (name !== undefined) {
               product.name = name;
               // Also update the name in the inventory record
@@ -415,20 +411,21 @@ const updateInventory = async (req, res) => {
             }
             if (parsedPrice !== undefined) product.price = parsedPrice;
             if (parsedCostPrice !== undefined) product.costPrice = parsedCostPrice;
-            
+            if (category !== undefined) product.category = category;
             await product.save({ transaction });
             console.log('Saved product changes. New values:', {
               name: product.name,
               price: product.price,
-              costPrice: product.costPrice
+              costPrice: product.costPrice,
+              category: product.category
             });
           }
         }
-        
+
         // Commit the transaction
         await transaction.commit();
         console.log('Transaction committed successfully');
-        
+
         // Fetch the updated inventory with product details
         const updatedInventory = await Inventory.findByPk(inventory.id, {
           include: [{
@@ -437,7 +434,7 @@ const updateInventory = async (req, res) => {
             attributes: ['id', 'name', 'sku', 'category', 'imageUrl', 'price', 'costPrice']
           }]
         });
-        
+
         // Transform the data to match the format of getInventory
         const transformedInventory = {
           id: updatedInventory.id,
@@ -453,51 +450,46 @@ const updateInventory = async (req, res) => {
           costPrice: updatedInventory.product.costPrice,
           productId: updatedInventory.productId
         };
-        
+
         console.log('Sending response with transformed inventory:', transformedInventory);
         res.json(transformedInventory);
-        
+
         return;
       }
-      
+
       // Regular update logic for non-partial assignments
-    // Update inventory fields
-    if (quantity !== undefined) inventory.quantity = quantity;
-    if (minimumStockLevel !== undefined) inventory.minimumStockLevel = minimumStockLevel;
-    if (location !== undefined) inventory.location = location;
-    
-    // Track who updated it
-    inventory.lastUpdatedBy = req.user.id;
-    
+      // Update inventory fields
+      if (quantity !== undefined) inventory.quantity = quantity;
+      if (minimumStockLevel !== undefined) inventory.minimumStockLevel = minimumStockLevel;
+      if (location !== undefined) inventory.location = location;
+
+      // Track who updated it
+      inventory.lastUpdatedBy = req.user.id;
+
       // Save inventory changes
       await inventory.save({ transaction });
       console.log('Saved inventory changes');
-      
+
       // Update associated product if needed
-      if (name !== undefined || price !== undefined || costPrice !== undefined) {
-        console.log('Updating product fields:', { name, price, costPrice });
-        
+      if (name !== undefined || price !== undefined || costPrice !== undefined || category !== undefined) {
+        console.log('Updating product fields:', { name, price, costPrice, category });
         // Convert price and costPrice to proper decimal values
         const parsedPrice = price !== undefined ? parseFloat(price) : undefined;
         const parsedCostPrice = costPrice !== undefined ? parseFloat(costPrice) : undefined;
-        
         console.log('Parsed price values:', { parsedPrice, parsedCostPrice });
-        
         if (!inventory.product) {
           console.log('No product associated with inventory in the initial query. Fetching product directly...');
           // If product not included in the inventory query result, fetch it separately
           const productId = inventory.productId;
           console.log('Product ID from inventory record:', productId);
-          
           const product = await Product.findByPk(productId, { transaction });
-          
           if (product) {
             console.log('Found product to update:', product.id, 'with current values:', {
               name: product.name,
               price: product.price,
-              costPrice: product.costPrice
+              costPrice: product.costPrice,
+              category: product.category
             });
-            
             if (name !== undefined) {
               product.name = name;
               // Also update the name in the inventory record
@@ -505,12 +497,13 @@ const updateInventory = async (req, res) => {
             }
             if (parsedPrice !== undefined) product.price = parsedPrice;
             if (parsedCostPrice !== undefined) product.costPrice = parsedCostPrice;
-            
+            if (category !== undefined) product.category = category;
             await product.save({ transaction });
             console.log('Saved product changes. New values:', {
               name: product.name,
               price: product.price,
-              costPrice: product.costPrice
+              costPrice: product.costPrice,
+              category: product.category
             });
           } else {
             console.log('No product found for ID:', productId);
@@ -518,13 +511,12 @@ const updateInventory = async (req, res) => {
         } else {
           console.log('Product already loaded with inventory:', inventory.product.id);
           const product = inventory.product;
-          
           console.log('Current product values:', {
             name: product.name,
             price: product.price,
-            costPrice: product.costPrice
+            costPrice: product.costPrice,
+            category: product.category
           });
-          
           if (name !== undefined) {
             product.name = name;
             // Also update the name in the inventory record
@@ -532,22 +524,23 @@ const updateInventory = async (req, res) => {
           }
           if (parsedPrice !== undefined) product.price = parsedPrice;
           if (parsedCostPrice !== undefined) product.costPrice = parsedCostPrice;
-          
+          if (category !== undefined) product.category = category;
           await product.save({ transaction });
           console.log('Saved product changes. New values:', {
             name: product.name,
             price: product.price,
-            costPrice: product.costPrice
+            costPrice: product.costPrice,
+            category: product.category
           });
         }
       } else {
         console.log('No product fields to update');
       }
-      
+
       // Commit the transaction
       await transaction.commit();
       console.log('Transaction committed successfully');
-      
+
       // Fetch the updated inventory with product details
       const updatedInventory = await Inventory.findByPk(inventory.id, {
         include: [{
@@ -556,7 +549,7 @@ const updateInventory = async (req, res) => {
           attributes: ['id', 'name', 'sku', 'category', 'imageUrl', 'price', 'costPrice']
         }]
       });
-      
+
       // Transform the data to match the format of getInventory
       const transformedInventory = {
         id: updatedInventory.id,
@@ -572,7 +565,7 @@ const updateInventory = async (req, res) => {
         costPrice: updatedInventory.product.costPrice,
         productId: updatedInventory.productId
       };
-      
+
       console.log('Sending response with transformed inventory:', transformedInventory);
       res.json(transformedInventory);
     } catch (error) {
@@ -598,11 +591,11 @@ const deleteInventory = async (req, res) => {
         as: 'product'
       }]
     });
-    
+
     if (!inventory) {
       return res.status(404).json({ message: 'Inventory item not found' });
     }
-    
+
     // Only super admin or authorized godownadmin can delete inventory items
     if (req.user.role === 'superadmin') {
       // allow
@@ -625,10 +618,10 @@ const deleteInventory = async (req, res) => {
         message: 'Not authorized to delete inventory items'
       });
     }
-    
+
     // Start a transaction to ensure both operations succeed or fail together
     const transaction = await sequelize.transaction();
-    
+
     try {
       // If the inventory is assigned (not 'Unassigned'), move its quantity to the unassigned stock
       if (inventory.location !== 'Unassigned') {
@@ -679,11 +672,11 @@ const deleteInventory = async (req, res) => {
   }
 };
 
-export { 
-  getInventory, 
-  getInventoryById, 
-  createInventory, 
-  updateInventory, 
+export {
+  getInventory,
+  getInventoryById,
+  createInventory,
+  updateInventory,
   deleteInventory,
   getLowStockItems
 }; 

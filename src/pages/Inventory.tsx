@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import StockTable from '@/components/StockTable';
 import { Button } from '@/components/ui/button';
-import { 
-  Plus, 
-  FileText, 
-  Upload, 
-  Download, 
-  Package, 
-  AlertTriangle, 
+import {
+  Plus,
+  FileText,
+  Upload,
+  Download,
+  Package,
+  AlertTriangle,
   Search,
   X,
   Check
@@ -34,43 +34,43 @@ const Inventory = () => {
   const { user } = useUserStore();
   const isSuperAdmin = user?.role === 'superadmin';
   const isGodownAdmin = user?.role === 'godownadmin';
-  
+
   // Fetch godown data
   const { data: godowns = [] } = useQuery({
     queryKey: ['godowns'],
     queryFn: getGodowns,
     enabled: true // Always fetch godowns data
   });
-  
+
   // Use all godowns returned from the API for GodownAdmin
   // The server already filters the godowns based on user role and permissions
   const userGodowns = godowns;
-  
+
   // Use API data only - no fallback to sample data
   const items = inventoryItems || [];
-  
+
   // State for active tab
   const [activeTab, setActiveTab] = useState('all-products');
-  
+
   // State for search
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // State for managing add product modal
   const [showAddModal, setShowAddModal] = useState(false);
-  
+
   // State for edit modal
   const [showEditModal, setShowEditModal] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<StockItem | null>(null);
-  
+
   // State for delete confirmation
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<StockItem | null>(null);
-  
+
   // State for assign location modal
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [itemToAssign, setItemToAssign] = useState<StockItem | null>(null);
   const [selectedGodown, setSelectedGodown] = useState<string>('');
-  
+
   // State for the new product form
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -88,6 +88,7 @@ const Inventory = () => {
     quantity: 0,
     price: 0,
     costPrice: 0,
+    category: '',
   });
 
   // State for godowns fetched directly from API
@@ -101,19 +102,19 @@ const Inventory = () => {
     const { name, value } = e.target;
     setNewProduct({
       ...newProduct,
-      [name]: name === 'quantity' || name === 'price' || name === 'costPrice' 
-        ? Number(value) 
+      [name]: name === 'quantity' || name === 'price' || name === 'costPrice'
+        ? Number(value)
         : value,
     });
   };
-  
+
   // Handle input changes for edit form
   const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setEditedProduct({
       ...editedProduct,
-      [name]: name === 'quantity' || name === 'price' || name === 'costPrice' 
-        ? Number(value) 
+      [name]: name === 'quantity' || name === 'price' || name === 'costPrice'
+        ? Number(value)
         : value,
     });
   };
@@ -139,6 +140,7 @@ const Inventory = () => {
       quantity: item.quantity,
       price: item.price || 0,
       costPrice: item.costPrice || 0,
+      category: item.category || '',
     });
     setShowEditModal(true);
   };
@@ -146,19 +148,20 @@ const Inventory = () => {
   // Handler for submitting edits
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!itemToEdit) return;
-    
+
     const updates: Partial<StockItem> = {
       name: editedProduct.name,
       quantity: editedProduct.quantity,
       price: editedProduct.price,
       costPrice: editedProduct.costPrice,
+      category: editedProduct.category,
     };
-    
+
     console.log('Sending update with data:', updates);
     console.log('Item being edited:', itemToEdit);
-    
+
     updateInventoryMutation.mutate(
       { id: itemToEdit.id, updates },
       {
@@ -185,7 +188,7 @@ const Inventory = () => {
   // Handler for confirming deletion
   const handleDeleteConfirm = () => {
     if (!itemToDelete) return;
-    
+
     deleteInventoryMutation.mutate(itemToDelete.id, {
       onSuccess: () => {
         setShowDeleteConfirm(false);
@@ -204,21 +207,21 @@ const Inventory = () => {
   // Handle form submission
   const handleAddProduct = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Generate SKU if not provided since the field was removed
     const sku = generateSKU(newProduct.name);
-    
-    // Set location to "Unassigned" since we removed the field
+
+    // Use the category from the form, or fallback to 'Uncategorized' if empty
     const productToAdd = {
       ...newProduct,
       sku,
-      category: 'Uncategorized', // Default category since field was removed
+      category: newProduct.category && newProduct.category.trim() !== '' ? newProduct.category : 'Uncategorized',
       status: 'Normal' as const, // Default status
       unit: 'pcs', // Default unit since we're removing units
       location: "Unassigned", // Default to "Unassigned" for all products
       lastUpdated: new Date().toISOString().split('T')[0]
     };
-    
+
     addInventoryMutation.mutate(productToAdd, {
       onSuccess: () => {
         setShowAddModal(false);
@@ -226,24 +229,24 @@ const Inventory = () => {
       }
     });
   };
-  
+
   // Compute statistics from inventory data
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const lowStockItems = items.filter(item => item.status === 'Low');
-  
+
   // Get unassigned items
   const unassignedItems = items.filter(item => item.location === 'Unassigned');
-  
+
   // Get items assigned to user's godowns
   const userGodownItems = items.filter(item => {
     return userGodowns.some(godown => item.location === godown.name);
   });
-  
+
   // Filter displayed items based on search query and active tab
   const filteredItems = items.filter(item => {
-    const matchesSearch = !searchQuery || 
+    const matchesSearch = !searchQuery ||
       item.name.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     // Different filters based on active tab
     if (activeTab === 'all-products') {
       return matchesSearch;
@@ -252,7 +255,7 @@ const Inventory = () => {
     } else if (activeTab === 'my-godowns' && isGodownAdmin) {
       return matchesSearch && userGodowns.some(godown => item.location === godown.name);
     }
-    
+
     return matchesSearch;
   });
 
@@ -262,7 +265,7 @@ const Inventory = () => {
       console.error('No item selected for testing');
       return;
     }
-    
+
     try {
       console.log('Testing direct API call with:', itemToEdit.id);
       const testUpdate = {
@@ -271,7 +274,7 @@ const Inventory = () => {
         price: editedProduct.price,
         costPrice: editedProduct.costPrice,
       };
-      
+
       console.log('Test update payload:', testUpdate);
       const result = await inventoryService.updateInventoryItem(itemToEdit.id, testUpdate);
       console.log('Direct API call result:', result);
@@ -285,83 +288,83 @@ const Inventory = () => {
     setItemToAssign(item);
     setSelectedGodown('');
     setAssignQuantity(item.quantity); // Initialize with the full quantity
-    
+
     // Directly fetch godowns to ensure we have the latest data
     fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/godowns`, {
       headers: {
         'Authorization': `Bearer ${getAuthToken()}`
       }
     })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      return response.json();
-    })
-    .then(fetchedGodowns => {
-      // If we got godowns directly from the API, use them
-      if (fetchedGodowns && fetchedGodowns.length > 0) {
-        // For GodownAdmin users, if the server didn't filter correctly, apply additional client-side filtering
-        if (user?.role === 'godownadmin' && user?.location) {
-          const assignedGodownNames = user.location.split(',').map(name => name.trim());
-          
-          // Only include godowns that match the user's assigned locations
-          const filteredGodowns = fetchedGodowns.filter(godown => 
-            assignedGodownNames.includes(godown.name)
-          );
-          
-          setDirectFetchedGodowns(filteredGodowns);
-        } else {
-          // For SuperAdmin, use all godowns
-          setDirectFetchedGodowns(fetchedGodowns);
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
         }
-      } else {
-        // No godowns found
+        return response.json();
+      })
+      .then(fetchedGodowns => {
+        // If we got godowns directly from the API, use them
+        if (fetchedGodowns && fetchedGodowns.length > 0) {
+          // For GodownAdmin users, if the server didn't filter correctly, apply additional client-side filtering
+          if (user?.role === 'godownadmin' && user?.location) {
+            const assignedGodownNames = user.location.split(',').map(name => name.trim());
+
+            // Only include godowns that match the user's assigned locations
+            const filteredGodowns = fetchedGodowns.filter(godown =>
+              assignedGodownNames.includes(godown.name)
+            );
+
+            setDirectFetchedGodowns(filteredGodowns);
+          } else {
+            // For SuperAdmin, use all godowns
+            setDirectFetchedGodowns(fetchedGodowns);
+          }
+        } else {
+          // No godowns found
+          setDirectFetchedGodowns([]);
+        }
+      })
+      .catch(error => {
+        console.error('Failed to fetch godowns directly:', error);
         setDirectFetchedGodowns([]);
-      }
-    })
-    .catch(error => {
-      console.error('Failed to fetch godowns directly:', error);
-      setDirectFetchedGodowns([]);
-    });
-    
+      });
+
     setShowAssignModal(true);
   };
 
   // Handler for submitting location assignment
   const handleAssignSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!itemToAssign || !selectedGodown || !assignQuantity || assignQuantity <= 0 || assignQuantity > itemToAssign.quantity) {
       console.log('Missing required data or invalid quantity:', { itemToAssign, selectedGodown, assignQuantity });
       return;
     }
-    
+
     // Find the selected godown
     const foundGodown = [...directFetchedGodowns, ...godowns].find(g => g.id === selectedGodown);
-    
+
     if (!foundGodown) {
       console.error('Selected godown not found in available godowns!');
       return;
     }
-    
+
     const selectedGodownName = foundGodown.name;
-    
+
     // Calculate remaining quantity
     const remainingQuantity = itemToAssign.quantity - assignQuantity;
-    
+
     // First, update the original item to have the remaining quantity
     const updateOriginalItem = {
       quantity: remainingQuantity,
       location: "Unassigned" // Keep the original item in Unassigned
     };
-    
+
     // Check if an item with the same product and location already exists
-    const existingItem = items.find(item => 
-      item.productId === itemToAssign.productId && 
+    const existingItem = items.find(item =>
+      item.productId === itemToAssign.productId &&
       item.location === selectedGodownName
     );
-    
+
     // Make the API calls
     try {
       // First update the original item
@@ -373,66 +376,66 @@ const Inventory = () => {
         },
         body: JSON.stringify(updateOriginalItem)
       })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(() => {
-        if (existingItem) {
-          // If an item with the same product and location exists, update its quantity
-          const updatedQuantity = existingItem.quantity + assignQuantity;
-          return fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/inventory/${existingItem.id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${getAuthToken()}`
-            },
-            body: JSON.stringify({ quantity: updatedQuantity })
-          });
-        } else {
-          // Create a new item for the assigned portion
-          const newAssignedItem = {
-            name: itemToAssign.name,
-            sku: itemToAssign.sku,
-            category: itemToAssign.category,
-            location: selectedGodownName,
-            quantity: assignQuantity,
-            unit: itemToAssign.unit,
-            status: itemToAssign.status,
-            price: itemToAssign.price,
-            costPrice: itemToAssign.costPrice,
-            productId: itemToAssign.productId
-          };
-          
-          return fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/inventory`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${getAuthToken()}`
-            },
-            body: JSON.stringify(newAssignedItem)
-          });
-        }
-      })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(() => {
-        refetch();
-        setShowAssignModal(false);
-        setItemToAssign(null);
-        setSelectedGodown('');
-        setAssignQuantity(0);
-      })
-      .catch(error => {
-        console.error('Assignment failed:', error);
-        alert(`Failed to assign product: ${error.message}`);
-      });
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(() => {
+          if (existingItem) {
+            // If an item with the same product and location exists, update its quantity
+            const updatedQuantity = existingItem.quantity + assignQuantity;
+            return fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/inventory/${existingItem.id}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getAuthToken()}`
+              },
+              body: JSON.stringify({ quantity: updatedQuantity })
+            });
+          } else {
+            // Create a new item for the assigned portion
+            const newAssignedItem = {
+              name: itemToAssign.name,
+              sku: itemToAssign.sku,
+              category: itemToAssign.category,
+              location: selectedGodownName,
+              quantity: assignQuantity,
+              unit: itemToAssign.unit,
+              status: itemToAssign.status,
+              price: itemToAssign.price,
+              costPrice: itemToAssign.costPrice,
+              productId: itemToAssign.productId
+            };
+
+            return fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/inventory`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getAuthToken()}`
+              },
+              body: JSON.stringify(newAssignedItem)
+            });
+          }
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(() => {
+          refetch();
+          setShowAssignModal(false);
+          setItemToAssign(null);
+          setSelectedGodown('');
+          setAssignQuantity(0);
+        })
+        .catch(error => {
+          console.error('Assignment failed:', error);
+          alert(`Failed to assign product: ${error.message}`);
+        });
     } catch (error) {
       console.error('Exception during fetch:', error);
     }
@@ -441,7 +444,7 @@ const Inventory = () => {
   // For debugging - log all godowns but don't expose sensitive information
   console.log('Number of godowns from API:', godowns.length);
   console.log('Current user role:', user?.role);
-  
+
   // Get the current token for API requests but don't log the complete token
   const getAuthToken = () => {
     const token = localStorage.getItem('token');
@@ -456,7 +459,7 @@ const Inventory = () => {
           <p className="text-gray-600">Manage and track your product inventory across all locations</p>
         </div>
         <div className="flex space-x-2">
-          <Button 
+          <Button
             className="bg-stock-blue-600 hover:bg-stock-blue-700 flex items-center"
             onClick={() => setShowAddModal(true)}
           >
@@ -465,7 +468,7 @@ const Inventory = () => {
           </Button>
         </div>
       </div>
-      
+
       {/* Inventory summary cards - responsive and flexible layout */}
       <div className="flex flex-wrap gap-2 mb-4 w-full">
         <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0">
@@ -511,7 +514,7 @@ const Inventory = () => {
           </div>
         )}
       </div>
-      
+
       {/* Search */}
       <div className="mb-6">
         <div className="relative">
@@ -524,7 +527,7 @@ const Inventory = () => {
           />
         </div>
       </div>
-      
+
       {/* Product tabs for GodownAdmin */}
       {isGodownAdmin && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
@@ -535,9 +538,9 @@ const Inventory = () => {
           </TabsList>
         </Tabs>
       )}
-      
+
       <div>
-        <StockTable 
+        <StockTable
           title={`Products (${filteredItems.length})`}
           items={filteredItems}
           isLoading={isLoading}
@@ -550,21 +553,21 @@ const Inventory = () => {
           hideCostPrice={!isSuperAdmin}
         />
       </div>
-      
+
       {/* Add Product Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Add New Product</h2>
-              <button 
+              <button
                 className="text-gray-500 hover:text-gray-700"
                 onClick={() => setShowAddModal(false)}
               >
                 <X size={20} />
               </button>
             </div>
-            
+
             <form onSubmit={handleAddProduct}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
@@ -581,7 +584,7 @@ const Inventory = () => {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Quantity*
@@ -641,17 +644,31 @@ const Inventory = () => {
                     />
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Category
+                  </label>
+                  <input
+                    type="text"
+                    name="category"
+                    value={newProduct.category}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-stock-blue-500"
+                    placeholder="Enter category (optional)"
+                  />
+                </div>
               </div>
-              
+
               <div className="flex justify-end space-x-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setShowAddModal(false)}
                   type="button"
                 >
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   type="submit"
                   disabled={addInventoryMutation.isPending}
                 >
@@ -669,7 +686,7 @@ const Inventory = () => {
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Edit Product</h2>
-              <button 
+              <button
                 className="text-gray-500 hover:text-gray-700"
                 onClick={() => {
                   setShowEditModal(false);
@@ -679,7 +696,7 @@ const Inventory = () => {
                 <X size={20} />
               </button>
             </div>
-            
+
             <form onSubmit={handleEditSubmit}>
               <div className="grid grid-cols-1 gap-4 mb-4">
                 <div>
@@ -695,7 +712,7 @@ const Inventory = () => {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Quantity*
@@ -710,7 +727,21 @@ const Inventory = () => {
                     required
                   />
                 </div>
-                
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Category
+                  </label>
+                  <input
+                    type="text"
+                    name="category"
+                    value={editedProduct.category}
+                    onChange={handleEditInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-stock-blue-500"
+                    placeholder="Enter category (optional)"
+                  />
+                </div>
+
                 {itemToEdit.location === 'Unassigned' && (
                   <>
                     <div>
@@ -733,7 +764,7 @@ const Inventory = () => {
                         />
                       </div>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Selling Price*
@@ -757,10 +788,10 @@ const Inventory = () => {
                   </>
                 )}
               </div>
-              
+
               <div className="flex justify-end space-x-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => {
                     setShowEditModal(false);
                     setItemToEdit(null);
@@ -769,7 +800,7 @@ const Inventory = () => {
                 >
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   type="submit"
                   disabled={updateInventoryMutation.isPending}
                 >
@@ -789,10 +820,10 @@ const Inventory = () => {
             <p className="mb-6">
               Are you sure you want to delete <span className="font-semibold">{itemToDelete.name}</span>? This action cannot be undone.
             </p>
-            
+
             <div className="flex justify-end space-x-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => {
                   setShowDeleteConfirm(false);
                   setItemToDelete(null);
@@ -801,8 +832,8 @@ const Inventory = () => {
               >
                 Cancel
               </Button>
-              <Button 
-                variant="destructive" 
+              <Button
+                variant="destructive"
                 onClick={handleDeleteConfirm}
                 disabled={deleteInventoryMutation.isPending}
               >
@@ -819,7 +850,7 @@ const Inventory = () => {
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Assign Product to Godown</h2>
-              <button 
+              <button
                 className="text-gray-500 hover:text-gray-700"
                 onClick={() => {
                   setShowAssignModal(false);
@@ -829,7 +860,7 @@ const Inventory = () => {
                 <X size={20} />
               </button>
             </div>
-            
+
             <form onSubmit={handleAssignSubmit}>
               <div className="mb-4">
                 <p className="text-sm text-gray-600 mb-4">
@@ -839,7 +870,7 @@ const Inventory = () => {
                     <>Assign <span className="font-semibold">{itemToAssign.name}</span> to a godown:</>
                   )}
                 </p>
-                
+
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -871,8 +902,8 @@ const Inventory = () => {
                     </Select>
                     {directFetchedGodowns.length === 0 && godowns.length === 0 && (
                       <p className="text-xs text-red-500 mt-2">
-                        {isGodownAdmin ? 
-                          "No godowns are assigned to you. Please contact an administrator." : 
+                        {isGodownAdmin ?
+                          "No godowns are assigned to you. Please contact an administrator." :
                           "No godowns available. Please create godowns first."}
                       </p>
                     )}
@@ -882,7 +913,7 @@ const Inventory = () => {
                       </p>
                     )}
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Quantity to Assign*
@@ -907,10 +938,10 @@ const Inventory = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex justify-end space-x-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => {
                     setShowAssignModal(false);
                     setItemToAssign(null);
@@ -919,13 +950,13 @@ const Inventory = () => {
                 >
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   type="submit"
                   disabled={!selectedGodown || !assignQuantity || assignQuantity <= 0 || assignQuantity > itemToAssign.quantity || updateInventoryMutation.isPending}
                   className="bg-green-600 hover:bg-green-700"
                 >
-                  {updateInventoryMutation.isPending 
-                    ? 'Assigning...' 
+                  {updateInventoryMutation.isPending
+                    ? 'Assigning...'
                     : (
                       <span className="flex items-center">
                         <Check size={16} className="mr-1" />
