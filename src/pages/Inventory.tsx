@@ -456,18 +456,6 @@ const Inventory = () => {
           <p className="text-gray-600">Manage and track your product inventory across all locations</p>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" size="sm" className="flex items-center">
-            <Upload size={16} className="mr-1" />
-            Import
-          </Button>
-          <Button variant="outline" size="sm" className="flex items-center">
-            <Download size={16} className="mr-1" />
-            Export
-          </Button>
-          <Button variant="outline" size="sm" className="flex items-center">
-            <FileText size={16} className="mr-1" />
-            Report
-          </Button>
           <Button 
             className="bg-stock-blue-600 hover:bg-stock-blue-700 flex items-center"
             onClick={() => setShowAddModal(true)}
@@ -478,39 +466,47 @@ const Inventory = () => {
         </div>
       </div>
       
-      {/* Stats cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="stock-card flex items-center">
-          <div className="bg-blue-100 p-3 rounded-lg mr-4">
-            <Package size={24} className="text-stock-blue-600" />
+      {/* Inventory summary cards - responsive and flexible layout */}
+      <div className="flex flex-wrap gap-2 mb-4 w-full">
+        <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0">
+          <div className="bg-blue-100 p-2 rounded-lg mr-2">
+            <Package size={18} className="text-blue-600" />
           </div>
-          <div>
-            <h3 className="text-gray-500 text-sm">Total Inventory</h3>
-            <p className="text-2xl font-semibold">{totalItems}</p>
-            <p className="text-xs text-gray-500">{items.length} unique products</p>
-          </div>
-        </div>
-        
-        <div className="stock-card flex items-center">
-          <div className="bg-red-100 p-3 rounded-lg mr-4">
-            <AlertTriangle size={24} className="text-alert-red" />
-          </div>
-          <div>
-            <h3 className="text-gray-500 text-sm">Low Stock Items</h3>
-            <p className="text-2xl font-semibold">{lowStockItems.length}</p>
-            <p className="text-xs text-gray-500">Requires attention</p>
+          <div className="truncate">
+            <h3 className="text-gray-500 text-xs truncate">Total Products</h3>
+            <p className="text-lg font-semibold">{items.length}</p>
+            <p className="text-[10px] text-gray-400 truncate">All inventory</p>
           </div>
         </div>
-        
+        <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0">
+          <div className="bg-green-100 p-2 rounded-lg mr-2">
+            <Package size={18} className="text-green-600" />
+          </div>
+          <div className="truncate">
+            <h3 className="text-gray-500 text-xs truncate">Total Stock</h3>
+            <p className="text-lg font-semibold">{totalItems}</p>
+            <p className="text-[10px] text-gray-400 truncate">All units</p>
+          </div>
+        </div>
+        <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0">
+          <div className="bg-red-100 p-2 rounded-lg mr-2">
+            <AlertTriangle size={18} className="text-red-600" />
+          </div>
+          <div className="truncate">
+            <h3 className="text-gray-500 text-xs truncate">Low Stock</h3>
+            <p className="text-lg font-semibold">{lowStockItems.length}</p>
+            <p className="text-[10px] text-gray-400 truncate">Requires attention</p>
+          </div>
+        </div>
         {isGodownAdmin && (
-          <div className="stock-card flex items-center">
-            <div className="bg-amber-100 p-3 rounded-lg mr-4">
-              <Package size={24} className="text-amber-600" />
+          <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0">
+            <div className="bg-amber-100 p-2 rounded-lg mr-2">
+              <Package size={18} className="text-amber-600" />
             </div>
-            <div>
-              <h3 className="text-gray-500 text-sm">Unassigned Products</h3>
-              <p className="text-2xl font-semibold">{unassignedItems.length}</p>
-              <p className="text-xs text-gray-500">Waiting for assignment</p>
+            <div className="truncate">
+              <h3 className="text-gray-500 text-xs truncate">Unassigned</h3>
+              <p className="text-lg font-semibold">{unassignedItems.length}</p>
+              <p className="text-[10px] text-gray-400 truncate">Waiting for assignment</p>
             </div>
           </div>
         )}

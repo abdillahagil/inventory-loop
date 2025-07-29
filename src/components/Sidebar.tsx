@@ -87,7 +87,7 @@ const Sidebar = () => {
   const filteredNavItems = navItems.filter((item) => item.roles.includes(userRole));
 
   return (
-    <div className="h-full w-64 bg-sidebar text-sidebar-foreground shadow-lg flex-shrink-0 hidden md:block">
+    <div className="h-full w-48 bg-sidebar text-sidebar-foreground shadow-lg flex-shrink-0 hidden md:block">
       <div className="p-4 border-b border-sidebar-border">
         <h1 className="text-xl font-bold flex items-center">
           <Package className="mr-2" />

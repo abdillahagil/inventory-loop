@@ -68,30 +68,47 @@ const Dashboard = () => {
         <p className="text-gray-600">Welcome to your stock management system</p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard 
-          title="Total Inventory" 
-          value="1,245" 
-          icon={<Package size={24} />}
-          trend={{ value: 8, isPositive: true }}
-        />
-        <StatCard 
-          title="Monthly Sales" 
-          value="$24,500" 
-          icon={<ShoppingCart size={24} />}
-          trend={{ value: 12, isPositive: true }}
-        />
-        <StatCard 
-          title="Active Transfers" 
-          value="8 transfers" 
-          icon={<ArrowDownUp size={24} />}
-        />
-        <StatCard 
-          title="Low Stock Alerts" 
-          value={`${isLoadingLowStock ? '...' : displayedLowStockItems.filter(item => item.status === 'Low').length} items`} 
-          icon={<AlertCircle size={24} />}
-          trend={{ value: 2, isPositive: false }}
-        />
+      <div className="flex flex-wrap gap-2 mb-4 w-full">
+        <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0">
+          <div className="bg-blue-100 p-2 rounded-lg mr-2">
+            <Package size={18} className="text-blue-600" />
+          </div>
+          <div className="truncate">
+            <h3 className="text-gray-500 text-xs truncate">Total Inventory</h3>
+            <p className="text-lg font-semibold">1,245</p>
+            <p className="text-[10px] text-gray-400 truncate">All items</p>
+          </div>
+        </div>
+        <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0">
+          <div className="bg-green-100 p-2 rounded-lg mr-2">
+            <ShoppingCart size={18} className="text-green-600" />
+          </div>
+          <div className="truncate">
+            <h3 className="text-gray-500 text-xs truncate">Monthly Sales</h3>
+            <p className="text-lg font-semibold">$24,500</p>
+            <p className="text-[10px] text-gray-400 truncate">This month</p>
+          </div>
+        </div>
+        <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0">
+          <div className="bg-amber-100 p-2 rounded-lg mr-2">
+            <ArrowDownUp size={18} className="text-amber-600" />
+          </div>
+          <div className="truncate">
+            <h3 className="text-gray-500 text-xs truncate">Active Transfers</h3>
+            <p className="text-lg font-semibold">8 transfers</p>
+            <p className="text-[10px] text-gray-400 truncate">Ongoing</p>
+          </div>
+        </div>
+        <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0">
+          <div className="bg-red-100 p-2 rounded-lg mr-2">
+            <AlertCircle size={18} className="text-red-600" />
+          </div>
+          <div className="truncate">
+            <h3 className="text-gray-500 text-xs truncate">Low Stock Alerts</h3>
+            <p className="text-lg font-semibold">{isLoadingLowStock ? '...' : displayedLowStockItems.filter(item => item.status === 'Low').length} items</p>
+            <p className="text-[10px] text-gray-400 truncate">Requires attention</p>
+          </div>
+        </div>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

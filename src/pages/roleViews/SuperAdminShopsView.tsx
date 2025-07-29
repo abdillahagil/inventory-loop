@@ -192,7 +192,7 @@ const SuperAdminShopsView = () => {
         
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
+            <Button className="flex items-center gap-2" size="sm">
               <Plus size={16} />
               <span>Add Shop</span>
             </Button>
@@ -258,11 +258,12 @@ const SuperAdminShopsView = () => {
                 
                 <DialogFooter>
                   <DialogClose asChild>
-                    <Button type="button" variant="outline">Cancel</Button>
+                    <Button type="button" variant="outline" size="sm">Cancel</Button>
                   </DialogClose>
                   <Button 
                     type="submit" 
                     disabled={createShopMutation.isPending}
+                    size="sm"
                   >
                     {createShopMutation.isPending ? (
                       <>
@@ -278,46 +279,34 @@ const SuperAdminShopsView = () => {
         </Dialog>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-medium flex items-center">
-              <Store className="h-4 w-4 mr-2 text-blue-500" />
-              Total Shops
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{shops?.length || 0}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-medium flex items-center">
-              <ShoppingBag className="h-4 w-4 mr-2 text-green-500" />
-              Retail Outlets
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {getTotalCapacity()} stores
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-medium flex items-center">
-              <MapPin className="h-4 w-4 mr-2 text-purple-500" />
-              Locations
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {new Set(shops?.map(s => s.location)).size || 0} locations
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex flex-wrap gap-2 mb-4 w-full">
+        <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0 bg-white rounded-lg shadow-sm">
+          <div className="bg-blue-100 p-2 rounded-lg mr-2">
+            <Store size={18} className="text-blue-500" />
+          </div>
+          <div className="truncate">
+            <h3 className="text-gray-500 text-xs truncate">Total Shops</h3>
+            <p className="text-lg font-semibold">{shops?.length || 0}</p>
+          </div>
+        </div>
+        <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0 bg-white rounded-lg shadow-sm">
+          <div className="bg-green-100 p-2 rounded-lg mr-2">
+            <ShoppingBag size={18} className="text-green-500" />
+          </div>
+          <div className="truncate">
+            <h3 className="text-gray-500 text-xs truncate">Retail Outlets</h3>
+            <p className="text-lg font-semibold">{getTotalCapacity()} stores</p>
+          </div>
+        </div>
+        <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0 bg-white rounded-lg shadow-sm">
+          <div className="bg-purple-100 p-2 rounded-lg mr-2">
+            <MapPin size={18} className="text-purple-500" />
+          </div>
+          <div className="truncate">
+            <h3 className="text-gray-500 text-xs truncate">Locations</h3>
+            <p className="text-lg font-semibold">{new Set(shops?.map(s => s.location)).size || 0} locations</p>
+          </div>
+        </div>
       </div>
       
       <Card>
@@ -334,32 +323,28 @@ const SuperAdminShopsView = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="w-1/4">Name</TableHead>
+                  <TableHead className="w-1/4">Location</TableHead>
+                  <TableHead className="w-1/4">Status</TableHead>
+                  <TableHead className="w-1/4 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {shops && shops.length > 0 ? (
                   shops.map((shop) => (
                     <TableRow key={shop.id}>
-                      <TableCell className="font-medium">{shop.name}</TableCell>
-                      <TableCell>{shop.location}</TableCell>
-                      <TableCell>
+                      <TableCell className="font-medium py-2 px-3">{shop.name}</TableCell>
+                      <TableCell className="py-2 px-3">{shop.location}</TableCell>
+                      <TableCell className="py-2 px-3">
                         <Badge variant={shop.isActive ? "default" : "secondary"}>
                           {shop.isActive ? 'Active' : 'Inactive'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right py-2 px-3">
                         <div className="flex justify-end gap-2">
                           <Dialog open={editingShop?.id === shop.id} onOpenChange={(open) => !open && setEditingShop(null)}>
                             <DialogTrigger asChild>
-                              <Button 
-                                variant="outline" 
-                                size="icon"
-                                onClick={() => setEditingShop(shop)}
-                              >
+                              <Button variant="outline" size="sm" className="flex items-center justify-center" onClick={() => setEditingShop(shop)}>
                                 <Pencil size={16} />
                               </Button>
                             </DialogTrigger>
@@ -424,11 +409,12 @@ const SuperAdminShopsView = () => {
                                   
                                   <DialogFooter>
                                     <DialogClose asChild>
-                                      <Button type="button" variant="outline">Cancel</Button>
+                                      <Button type="button" variant="outline" size="sm">Cancel</Button>
                                     </DialogClose>
                                     <Button 
                                       type="submit" 
                                       disabled={updateShopMutation.isPending}
+                                      size="sm"
                                     >
                                       {updateShopMutation.isPending ? (
                                         <>
@@ -445,11 +431,7 @@ const SuperAdminShopsView = () => {
                           
                           <Dialog open={deletingShop?.id === shop.id} onOpenChange={(open) => !open && setDeletingShop(null)}>
                             <DialogTrigger asChild>
-                              <Button 
-                                variant="destructive" 
-                                size="icon"
-                                onClick={() => setDeletingShop(shop)}
-                              >
+                              <Button variant="destructive" size="sm" className="flex items-center justify-center" onClick={() => setDeletingShop(shop)}>
                                 <Trash2 size={16} />
                               </Button>
                             </DialogTrigger>
@@ -474,12 +456,13 @@ const SuperAdminShopsView = () => {
                               
                               <DialogFooter className="mt-4">
                                 <DialogClose asChild>
-                                  <Button type="button" variant="outline">Cancel</Button>
+                                  <Button type="button" variant="outline" size="sm">Cancel</Button>
                                 </DialogClose>
                                 <Button 
                                   variant="destructive" 
                                   onClick={handleDelete}
                                   disabled={deleteShopMutation.isPending}
+                                  size="sm"
                                 >
                                   {deleteShopMutation.isPending ? (
                                     <>

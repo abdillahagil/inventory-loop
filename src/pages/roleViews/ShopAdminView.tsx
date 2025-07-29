@@ -191,37 +191,35 @@ const ShopAdminView = () => {
       </div>
       
       {/* Stats cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="stock-card flex items-center">
-          <div className="bg-blue-100 p-3 rounded-lg mr-4">
-            <Package size={24} className="text-stock-blue-600" />
+      <div className="flex flex-wrap gap-2 mb-4 w-full">
+        <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0">
+          <div className="bg-blue-100 p-2 rounded-lg mr-2">
+            <Package size={18} className="text-stock-blue-600" />
           </div>
-          <div>
-            <h3 className="text-gray-500 text-sm">Total Stock</h3>
-            <p className="text-2xl font-semibold">{totalStock}</p>
-            <p className="text-xs text-gray-500">{shopItems.length} unique products</p>
-          </div>
-        </div>
-        
-        <div className="stock-card flex items-center">
-          <div className="bg-green-100 p-3 rounded-lg mr-4">
-            <TrendingUp size={24} className="text-green-600" />
-          </div>
-          <div>
-            <h3 className="text-gray-500 text-sm">Total Sales</h3>
-            <p className="text-2xl font-semibold">{totalSales}</p>
-            <p className="text-xs text-gray-500">${totalRevenue.toFixed(2)} revenue</p>
+          <div className="truncate">
+            <h3 className="text-gray-500 text-xs truncate">Total Stock</h3>
+            <p className="text-lg font-semibold">{totalStock}</p>
+            <p className="text-[10px] text-gray-400 truncate">{shopItems.length} unique products</p>
           </div>
         </div>
-        
-        <div className="stock-card flex items-center">
-          <div className="bg-purple-100 p-3 rounded-lg mr-4">
-            <Store size={24} className="text-purple-600" />
+        <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0">
+          <div className="bg-green-100 p-2 rounded-lg mr-2">
+            <TrendingUp size={18} className="text-green-600" />
           </div>
-          <div>
-            <h3 className="text-gray-500 text-sm">My Shops</h3>
-            <p className="text-2xl font-semibold">{assignedShopNames.length}</p>
-            <p className="text-xs text-gray-500">Assigned locations</p>
+          <div className="truncate">
+            <h3 className="text-gray-500 text-xs truncate">Total Sales</h3>
+            <p className="text-lg font-semibold">{totalSales}</p>
+            <p className="text-[10px] text-gray-400 truncate">${totalRevenue.toFixed(2)} revenue</p>
+          </div>
+        </div>
+        <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0">
+          <div className="bg-purple-100 p-2 rounded-lg mr-2">
+            <Store size={18} className="text-purple-600" />
+          </div>
+          <div className="truncate">
+            <h3 className="text-gray-500 text-xs truncate">My Shops</h3>
+            <p className="text-lg font-semibold">{assignedShopNames.length}</p>
+            <p className="text-[10px] text-gray-400 truncate">Assigned locations</p>
           </div>
         </div>
       </div>

@@ -204,7 +204,7 @@ const SuperAdminGodowns = () => {
         
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
+            <Button className="flex items-center gap-2" size="sm">
               <Plus size={16} />
               <span>Add Godown</span>
             </Button>
@@ -270,11 +270,12 @@ const SuperAdminGodowns = () => {
                 
                 <DialogFooter>
                   <DialogClose asChild>
-                    <Button type="button" variant="outline">Cancel</Button>
+                    <Button type="button" variant="outline" size="sm">Cancel</Button>
                   </DialogClose>
                   <Button 
                     type="submit" 
                     disabled={createGodownMutation.isPending}
+                    size="sm"
                   >
                     {createGodownMutation.isPending ? (
                       <>
@@ -290,46 +291,34 @@ const SuperAdminGodowns = () => {
         </Dialog>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-medium flex items-center">
-              <SquareStack className="h-4 w-4 mr-2 text-blue-500" />
-              Total Godowns
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{godowns?.length || 0}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-medium flex items-center">
-              <Package className="h-4 w-4 mr-2 text-green-500" />
-              Storage Locations
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {getTotalCapacity()} warehouses
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-medium flex items-center">
-              <MapPin className="h-4 w-4 mr-2 text-purple-500" />
-              Locations
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {new Set(godowns?.map(g => g.location)).size || 0} locations
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex flex-wrap gap-2 mb-4 w-full">
+        <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0 bg-white rounded-lg shadow-sm">
+          <div className="bg-blue-100 p-2 rounded-lg mr-2">
+            <SquareStack size={18} className="text-blue-500" />
+          </div>
+          <div className="truncate">
+            <h3 className="text-gray-500 text-xs truncate">Total Godowns</h3>
+            <p className="text-lg font-semibold">{godowns?.length || 0}</p>
+          </div>
+        </div>
+        <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0 bg-white rounded-lg shadow-sm">
+          <div className="bg-green-100 p-2 rounded-lg mr-2">
+            <Package size={18} className="text-green-500" />
+          </div>
+          <div className="truncate">
+            <h3 className="text-gray-500 text-xs truncate">Storage Locations</h3>
+            <p className="text-lg font-semibold">{getTotalCapacity()} warehouses</p>
+          </div>
+        </div>
+        <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0 bg-white rounded-lg shadow-sm">
+          <div className="bg-purple-100 p-2 rounded-lg mr-2">
+            <MapPin size={18} className="text-purple-500" />
+          </div>
+          <div className="truncate">
+            <h3 className="text-gray-500 text-xs truncate">Locations</h3>
+            <p className="text-lg font-semibold">{new Set(godowns?.map(g => g.location)).size || 0} locations</p>
+          </div>
+        </div>
       </div>
       
       <Card>
@@ -346,32 +335,28 @@ const SuperAdminGodowns = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="w-1/4">Name</TableHead>
+                  <TableHead className="w-1/4">Location</TableHead>
+                  <TableHead className="w-1/4">Status</TableHead>
+                  <TableHead className="w-1/4 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {godowns && godowns.length > 0 ? (
                   godowns.map((godown) => (
                     <TableRow key={godown.id}>
-                      <TableCell className="font-medium">{godown.name}</TableCell>
-                      <TableCell>{godown.location}</TableCell>
-                      <TableCell>
+                      <TableCell className="font-medium py-2 px-3">{godown.name}</TableCell>
+                      <TableCell className="py-2 px-3">{godown.location}</TableCell>
+                      <TableCell className="py-2 px-3">
                         <Badge variant={godown.isActive ? "default" : "secondary"}>
                           {godown.isActive ? 'Active' : 'Inactive'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right py-2 px-3">
                         <div className="flex justify-end gap-2">
                           <Dialog open={editingGodown?.id === godown.id} onOpenChange={(open) => !open && setEditingGodown(null)}>
                             <DialogTrigger asChild>
-                              <Button 
-                                variant="outline" 
-                                size="icon"
-                                onClick={() => setEditingGodown(godown)}
-                              >
+                              <Button variant="outline" size="sm" className="flex items-center justify-center" onClick={() => setEditingGodown(godown)}>
                                 <Pencil size={16} />
                               </Button>
                             </DialogTrigger>
@@ -436,11 +421,12 @@ const SuperAdminGodowns = () => {
                                   
                                   <DialogFooter>
                                     <DialogClose asChild>
-                                      <Button type="button" variant="outline">Cancel</Button>
+                                      <Button type="button" variant="outline" size="sm">Cancel</Button>
                                     </DialogClose>
                                     <Button 
                                       type="submit" 
                                       disabled={updateGodownMutation.isPending}
+                                      size="sm"
                                     >
                                       {updateGodownMutation.isPending ? (
                                         <>
@@ -457,11 +443,7 @@ const SuperAdminGodowns = () => {
                           
                           <Dialog open={deletingGodown?.id === godown.id} onOpenChange={(open) => !open && setDeletingGodown(null)}>
                             <DialogTrigger asChild>
-                              <Button 
-                                variant="destructive" 
-                                size="icon"
-                                onClick={() => setDeletingGodown(godown)}
-                              >
+                              <Button variant="destructive" size="sm" className="flex items-center justify-center" onClick={() => setDeletingGodown(godown)}>
                                 <Trash2 size={16} />
                               </Button>
                             </DialogTrigger>
@@ -485,12 +467,13 @@ const SuperAdminGodowns = () => {
                               
                               <DialogFooter className="mt-4">
                                 <DialogClose asChild>
-                                  <Button type="button" variant="outline">Cancel</Button>
+                                  <Button type="button" variant="outline" size="sm">Cancel</Button>
                                 </DialogClose>
                                 <Button 
                                   variant="destructive" 
                                   onClick={handleDelete}
                                   disabled={deleteGodownMutation.isPending}
+                                  size="sm"
                                 >
                                   {deleteGodownMutation.isPending ? (
                                     <>
