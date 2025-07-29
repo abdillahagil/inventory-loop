@@ -97,7 +97,10 @@ const App = () => (
                 <Route path="/" element={<Dashboard />} />
                 
                 {/* Routes accessible to all authenticated users */}
-                <Route path="/inventory" element={<Inventory />} />
+                {/* Inventory: Only SuperAdmin and GodownAdmin */}
+                <Route element={<ProtectedRoute allowedRoles={['superadmin', 'godownadmin']} />}>
+                  <Route path="/inventory" element={<Inventory />} />
+                </Route>
                 
                 {/* Super Admin Only Routes */}
                 <Route element={<ProtectedRoute allowedRoles={['superadmin']} />}>

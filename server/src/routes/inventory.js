@@ -25,6 +25,6 @@ router.get('/low-stock', getLowStockItems);
 router.route('/:id')
   .get(getInventoryById)
   .put(updateInventory) // Access control is handled in the controller
-  .delete(authorize('superadmin'), deleteInventory);
+  .delete(authorize('superadmin', 'godownadmin'), deleteInventory);
 
 export default router; 

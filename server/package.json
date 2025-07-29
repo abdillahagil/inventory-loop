@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "migrate": "node migrate-db.js",
+    "migrate": "node migrations/run-migrations.js",
     "resetdb": "npm run migrate && npm run dev",
     "seed": "node src/seed.js",
     "test": "echo \"Error: no test specified\" && exit 1"

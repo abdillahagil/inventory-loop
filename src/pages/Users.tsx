@@ -214,12 +214,13 @@ const Users = () => {
       console.log('Setting locationIds for edit form:', locationIds);
       
       editForm.reset({
-        email: editingUser.email,
-        name: editingUser.name,
-        role: editingUser.role,
-        locationId: editingUser.locationId || '',
-        locationIds: locationIds,
-        isActive: editingUser.isActive
+        email: editingUser.email || "",
+        name: editingUser.name || "",
+        role: editingUser.role || "shopadmin",
+        locationId: editingUser.locationId || "",
+        locationIds: locationIds || [],
+        isActive: typeof editingUser.isActive === "boolean" ? editingUser.isActive : true,
+        password: ""
       });
     }
   }, [editingUser, editForm, godowns]);
@@ -496,12 +497,12 @@ const Users = () => {
                                       <input
                                         type="checkbox"
                                         id={`godown-${godown.id}`}
-                                        checked={field.value?.includes(godown.id)}
+                                        checked={(field.value ?? []).includes(godown.id)}
                                         onChange={(e) => {
                                           if (e.target.checked) {
                                             field.onChange([...(field.value || []), godown.id]);
                                           } else {
-                                            field.onChange(field.value?.filter(id => id !== godown.id) || []);
+                                            field.onChange((field.value || []).filter(id => id !== godown.id));
                                           }
                                         }}
                                         className="h-3 w-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -847,12 +848,12 @@ const Users = () => {
                                     <input
                                       type="checkbox"
                                       id={`edit-godown-${godown.id}`}
-                                      checked={field.value?.includes(godown.id)}
+                                      checked={(field.value ?? []).includes(godown.id)}
                                       onChange={(e) => {
                                         if (e.target.checked) {
                                           field.onChange([...(field.value || []), godown.id]);
                                         } else {
-                                          field.onChange(field.value?.filter(id => id !== godown.id) || []);
+                                          field.onChange((field.value || []).filter(id => id !== godown.id));
                                         }
                                       }}
                                       className="h-3 w-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"

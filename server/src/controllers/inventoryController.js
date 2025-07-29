@@ -603,9 +603,25 @@ const deleteInventory = async (req, res) => {
       return res.status(404).json({ message: 'Inventory item not found' });
     }
     
-    // Only super admin can delete inventory items
-    if (req.user.role !== 'superadmin') {
-      return res.status(403).json({ 
+    // Only super admin or authorized godownadmin can delete inventory items
+    if (req.user.role === 'superadmin') {
+      // allow
+    } else if (req.user.role === 'godownadmin') {
+      if (req.user.location) {
+        const assignedGodownNames = req.user.location.split(',').map(name => name.trim());
+        if (!assignedGodownNames.includes(inventory.location)) {
+          return res.status(403).json({
+            message: 'GodownAdmin not authorized to delete inventory from this location'
+          });
+        }
+        // allow
+      } else {
+        return res.status(403).json({
+          message: 'GodownAdmin has no assigned locations'
+        });
+      }
+    } else {
+      return res.status(403).json({
         message: 'Not authorized to delete inventory items'
       });
     }
@@ -614,23 +630,44 @@ const deleteInventory = async (req, res) => {
     const transaction = await sequelize.transaction();
     
     try {
+      // If the inventory is assigned (not 'Unassigned'), move its quantity to the unassigned stock
+      if (inventory.location !== 'Unassigned') {
+        // Find or create the unassigned inventory for this product
+        let unassignedInventory = await Inventory.findOne({
+          where: { productId: inventory.productId, location: 'Unassigned' },
+          transaction
+        });
+        if (unassignedInventory) {
+          // Add the quantity to the unassigned inventory
+          unassignedInventory.quantity += inventory.quantity;
+          await unassignedInventory.save({ transaction });
+        } else {
+          // Create a new unassigned inventory row
+          unassignedInventory = await Inventory.create({
+            productId: inventory.productId,
+            name: inventory.name,
+            quantity: inventory.quantity,
+            location: 'Unassigned',
+            status: inventory.status,
+            price: inventory.price,
+            costPrice: inventory.costPrice,
+            minimumStockLevel: inventory.minimumStockLevel
+          }, { transaction });
+        }
+      }
       // Delete the inventory item
       await inventory.destroy({ transaction });
-      
       // If this was the last inventory item for this product, delete the product too
       const remainingInventory = await Inventory.count({
         where: { productId: inventory.productId },
         transaction
       });
-      
       if (remainingInventory === 0 && inventory.product) {
         await inventory.product.destroy({ transaction });
       }
-      
       // Commit the transaction
       await transaction.commit();
-      
-      res.json({ message: 'Inventory item and associated product removed' });
+      res.json({ message: 'Inventory item deleted. If assigned, quantity returned to unassigned stock.' });
     } catch (error) {
       // Rollback the transaction if anything fails
       await transaction.rollback();

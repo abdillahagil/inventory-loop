@@ -545,12 +545,12 @@ const Inventory = () => {
           title={`Products (${filteredItems.length})`}
           items={filteredItems}
           isLoading={isLoading}
-          onEditClick={handleEditClick}
-          onDeleteClick={handleDeleteClick}
+          onEditClick={(isSuperAdmin || isGodownAdmin) ? handleEditClick : undefined}
+          onDeleteClick={(isSuperAdmin || isGodownAdmin) ? handleDeleteClick : undefined}
           onAssignClick={isGodownAdmin ? handleAssignClick : undefined}
           showAssignButton={isGodownAdmin && (activeTab === 'unassigned' || activeTab === 'all-products')}
-          hideEditButton={(item) => isGodownAdmin && item.location === 'Unassigned'}
-          hideDeleteButton={(item) => isGodownAdmin && item.location === 'Unassigned'}
+          hideEditButton={() => !(isSuperAdmin || isGodownAdmin)}
+          hideDeleteButton={() => !(isSuperAdmin || isGodownAdmin)}
           hideCostPrice={!isSuperAdmin}
         />
       </div>
