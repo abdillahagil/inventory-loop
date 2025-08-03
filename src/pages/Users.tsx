@@ -106,6 +106,10 @@ const Users = () => {
     return true;
   });
 
+  // Helper to capitalize godown/shop names
+  const capitalizeLocation = (loc: string) =>
+    loc ? loc.charAt(0).toUpperCase() + loc.slice(1) : '';
+
   // Mutation for creating a user
   const createUserMutation = useMutation({
     mutationFn: (userData: UserFormData) => createUser(userData),
@@ -121,7 +125,7 @@ const Users = () => {
 
   // Mutation for updating a user
   const updateUserMutation = useMutation({
-    mutationFn: ({ id, userData }: { id: string, userData: UserFormData }) => 
+    mutationFn: ({ id, userData }: { id: string, userData: UserFormData }) =>
       updateUser(id, userData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -185,13 +189,13 @@ const Users = () => {
       // For godownadmin users, we need to parse the comma-separated location string 
       // into the locationIds array to properly populate the checkboxes
       let locationIds: string[] = [];
-      
+
       if (editingUser.role === 'godownadmin' && editingUser.location) {
         console.log('Processing godownadmin locations:', editingUser.location);
-        
+
         // Get location names from the comma-separated string
         const locationNames = editingUser.location.split(',').map(name => name.trim());
-        
+
         // Map location names back to location IDs using the godowns array
         locationIds = locationNames.reduce((ids, locationName) => {
           const godown = godowns.find(g => g.name === locationName);
@@ -204,15 +208,15 @@ const Users = () => {
           return ids;
         }, [] as string[]);
       }
-      
+
       // If we were provided locationIds directly, use those instead
       if (editingUser.locationIds && editingUser.locationIds.length > 0) {
         console.log('Using provided locationIds:', editingUser.locationIds);
         locationIds = editingUser.locationIds;
       }
-      
+
       console.log('Setting locationIds for edit form:', locationIds);
-      
+
       editForm.reset({
         email: editingUser.email || "",
         name: editingUser.name || "",
@@ -228,7 +232,7 @@ const Users = () => {
   // Handle create user form submission
   const onCreateSubmit = (values: UserFormValues) => {
     console.log('Creating user with values:', values);
-    
+
     // Prepare the data based on the role
     const userData: UserFormData = {
       email: values.email,
@@ -249,14 +253,14 @@ const Users = () => {
       userData.locationId = values.locationId;
       userData.location = getLocationName(values.role, values.locationId);
     }
-    
+
     createUserMutation.mutate(userData);
   };
 
   // Handle edit user form submission
   const onEditSubmit = (values: UserFormValues) => {
     console.log('Updating user with values:', values);
-    
+
     const userData: UserFormData = {
       email: values.email,
       name: values.name,
@@ -264,12 +268,12 @@ const Users = () => {
       isActive: values.isActive,
       location: ''
     };
-    
+
     // Only include password if it's not empty
     if (values.password) {
       userData.password = values.password;
     }
-    
+
     // Set location based on role
     if (values.role === 'godownadmin') {
       userData.locationIds = values.locationIds || [];
@@ -280,23 +284,23 @@ const Users = () => {
       userData.locationId = values.locationId;
       userData.location = getLocationName(values.role, values.locationId);
     }
-    
+
     updateUserMutation.mutate({ id: editingUser?.id || '', userData });
   };
 
   // Helper function to get location name from ID
   const getLocationName = (role: string, locationId?: string): string => {
     if (!locationId) return '';
-    
+
     if (role === 'godownadmin') {
       const godown = godowns.find(g => g.id === locationId);
       return godown ? godown.name : '';
-    } 
+    }
     else if (role === 'shopadmin') {
       const shop = shops.find(s => s.id === locationId);
       return shop ? shop.name : '';
     }
-    
+
     return '';
   };
 
@@ -353,11 +357,11 @@ const Users = () => {
     if (!currentUser) return false;
     if (!targetUser) return false;
     if (targetUser.id === currentUser.id) return false;
-    
+
     const roleHierarchy = { 'superadmin': 3, 'godownadmin': 2, 'shopadmin': 1, 'staff': 0 };
     const currentUserRoleLevel = roleHierarchy[currentUser.role] || 0;
     const targetUserRoleLevel = roleHierarchy[targetUser.role] || 0;
-    
+
     return currentUserRoleLevel > targetUserRoleLevel;
   };
 
@@ -380,7 +384,7 @@ const Users = () => {
           <h1 className="text-2xl font-bold">User Management</h1>
           <p className="text-gray-600">Manage system users and their permissions</p>
         </div>
-        
+
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button className="flex items-center gap-2">
@@ -395,42 +399,42 @@ const Users = () => {
                 Create a new user account with appropriate access level
               </DialogDescription>
             </DialogHeader>
-            
+
             <div className="max-h-[calc(90vh-180px)] overflow-y-auto pr-2 -mr-2">
-            <Form {...addForm}>
+              <Form {...addForm}>
                 <form onSubmit={addForm.handleSubmit(onCreateSubmit)} className="space-y-3">
-                <FormField
-                  control={addForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="email" 
-                          placeholder="Enter email address" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={addForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="Enter password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                  
+                  <FormField
+                    control={addForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="Enter email address"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={addForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="Enter password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <FormField
                     control={addForm.control}
                     name="name"
@@ -439,47 +443,47 @@ const Users = () => {
                         <FormLabel>Full Name</FormLabel>
                         <FormControl>
                           <Input placeholder="Enter full name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={addForm.control}
-                  name="role"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Role</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                              <SelectValue placeholder="Select role" />
-                          </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
-                          {getUserRoles().map(role => (
-                            <SelectItem key={role.value} value={role.value}>
-                              {role.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                  {/* Multi-select for godown admins */}
-                  {addFormRole === 'godownadmin' && (
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <FormField
                     control={addForm.control}
-                      name="locationIds"
+                    name="role"
                     render={({ field }) => (
                       <FormItem>
+                        <FormLabel>Role</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select role" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {getUserRoles().map(role => (
+                              <SelectItem key={role.value} value={role.value}>
+                                {role.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Multi-select for godown admins */}
+                  {addFormRole === 'godownadmin' && (
+                    <FormField
+                      control={addForm.control}
+                      name="locationIds"
+                      render={({ field }) => (
+                        <FormItem>
                           <FormLabel>Assign Godowns</FormLabel>
                           <div className="border rounded-md p-3">
                             <div className="text-xs text-gray-500 mb-2">
@@ -524,7 +528,7 @@ const Users = () => {
                       )}
                     />
                   )}
-                  
+
                   {/* Single select for shop admins */}
                   {addFormRole === 'shopadmin' && (
                     <FormField
@@ -541,7 +545,7 @@ const Users = () => {
                               <SelectTrigger>
                                 <SelectValue placeholder="Select shop to manage" />
                               </SelectTrigger>
-                        </FormControl>
+                            </FormControl>
                             <SelectContent>
                               {shops.map(shop => (
                                 <SelectItem key={shop.id} value={shop.id}>
@@ -555,43 +559,43 @@ const Users = () => {
                               No shops available to assign. Please create shops first.
                             </div>
                           )}
-                        <FormMessage />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  <FormField
+                    control={addForm.control}
+                    name="isActive"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                        <div className="space-y-0.5">
+                          <FormLabel>Active Status</FormLabel>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
                       </FormItem>
                     )}
                   />
-                )}
-                
-                <FormField
-                  control={addForm.control}
-                  name="isActive"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                      <div className="space-y-0.5">
-                          <FormLabel>Active Status</FormLabel>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                
-                <DialogFooter>
+
+                  <DialogFooter>
                     <Button type="submit" disabled={createUserMutation.isPending}>
                       {createUserMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Create User
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
             </div>
           </DialogContent>
         </Dialog>
       </div>
-      
+
       {/* User Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -637,13 +641,13 @@ const Users = () => {
           </CardContent>
         </Card>
       </div>
-      
+
       {/* User List with Tabs */}
       <Card>
         <CardHeader>
           <CardTitle>Users</CardTitle>
           <CardDescription>Manage all user accounts in the system</CardDescription>
-          
+
           <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="mt-4">
             <TabsList className="grid grid-cols-5 mb-4">
               <TabsTrigger value="all">All</TabsTrigger>
@@ -654,7 +658,7 @@ const Users = () => {
             </TabsList>
           </Tabs>
         </CardHeader>
-        
+
         <CardContent>
           {isLoading ? (
             <div className="flex justify-center my-8">
@@ -662,24 +666,24 @@ const Users = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {filteredUsers.length > 0 ? (
                     filteredUsers.map(user => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{getRoleBadge(user.role)}</TableCell>
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">{user.name}</TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>{getRoleBadge(user.role)}</TableCell>
                         <TableCell>
                           {user.role === 'godownadmin' && user.locationIds?.length ? (
                             <div className="flex items-center">
@@ -695,23 +699,23 @@ const Users = () => {
                             </div>
                           ) : null}
                         </TableCell>
-                      <TableCell>
-                        <Badge variant={user.isActive ? "default" : "secondary"}>
-                          {user.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                              <Button 
-                                variant="outline" 
+                        <TableCell>
+                          <Badge variant={user.isActive ? "default" : "secondary"}>
+                            {user.isActive ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
                               size="sm"
-                                disabled={!canModifyUser(user)}
-                                onClick={() => setEditingUser(user)}
-                              >
-                                <Pencil size={16} />
-                              </Button>
-                            <Button 
-                              variant="destructive" 
+                              disabled={!canModifyUser(user)}
+                              onClick={() => setEditingUser(user)}
+                            >
+                              <Pencil size={16} />
+                            </Button>
+                            <Button
+                              variant="destructive"
                               size="sm"
                               disabled={!canModifyUser(user)}
                               onClick={() => setDeletingUser(user)}
@@ -735,19 +739,19 @@ const Users = () => {
           )}
         </CardContent>
       </Card>
-      
+
       {/* Edit User Dialog */}
       <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-                              <DialogHeader>
-                                <DialogTitle>Edit User</DialogTitle>
-                                <DialogDescription>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
               Update user details and permissions
-                                </DialogDescription>
-                              </DialogHeader>
-                              
+            </DialogDescription>
+          </DialogHeader>
+
           <div className="max-h-[calc(90vh-180px)] overflow-y-auto pr-2 -mr-2">
-                              <Form {...editForm}>
+            <Form {...editForm}>
               <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-3">
                 <FormField
                   control={editForm.control}
@@ -756,17 +760,17 @@ const Users = () => {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="email" 
-                          placeholder="Enter email address" 
-                          {...field} 
+                        <Input
+                          type="email"
+                          placeholder="Enter email address"
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={editForm.control}
                   name="password"
@@ -780,57 +784,57 @@ const Users = () => {
                     </FormItem>
                   )}
                 />
-                
-                                  <FormField
-                                    control={editForm.control}
-                                    name="name"
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel>Full Name</FormLabel>
-                                        <FormControl>
-                                          <Input placeholder="Enter full name" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                                  
-                                  <FormField
-                                    control={editForm.control}
-                                    name="role"
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel>Role</FormLabel>
-                                        <Select 
-                                          onValueChange={field.onChange} 
-                                          defaultValue={field.value}
+
+                <FormField
+                  control={editForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter full name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editForm.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Role</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
                         value={field.value}
-                                        >
-                                          <FormControl>
-                                            <SelectTrigger>
+                      >
+                        <FormControl>
+                          <SelectTrigger>
                             <SelectValue placeholder="Select role" />
-                                            </SelectTrigger>
-                                          </FormControl>
-                                          <SelectContent>
-                                            {getUserRoles().map(role => (
-                                              <SelectItem key={role.value} value={role.value}>
-                                                {role.label}
-                                              </SelectItem>
-                                            ))}
-                                          </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                                  
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {getUserRoles().map(role => (
+                            <SelectItem key={role.value} value={role.value}>
+                              {role.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 {/* Multi-select for godown admins in edit form */}
                 {editFormRole === 'godownadmin' && (
-                                    <FormField
-                                      control={editForm.control}
+                  <FormField
+                    control={editForm.control}
                     name="locationIds"
-                                      render={({ field }) => (
-                                        <FormItem>
+                    render={({ field }) => (
+                      <FormItem>
                         <FormLabel>Assign Godowns</FormLabel>
                         <div className="border rounded-md p-3">
                           <div className="text-xs text-gray-500 mb-2">
@@ -875,7 +879,7 @@ const Users = () => {
                     )}
                   />
                 )}
-                
+
                 {/* Single select for shop admins in edit form */}
                 {editFormRole === 'shopadmin' && (
                   <FormField
@@ -892,7 +896,7 @@ const Users = () => {
                             <SelectTrigger>
                               <SelectValue placeholder="Select shop to manage" />
                             </SelectTrigger>
-                                          </FormControl>
+                          </FormControl>
                           <SelectContent>
                             {shops.map(shop => (
                               <SelectItem key={shop.id} value={shop.id}>
@@ -906,52 +910,52 @@ const Users = () => {
                             No shops available to assign. Please create shops first.
                           </div>
                         )}
-                                          <FormMessage />
-                                        </FormItem>
-                                      )}
-                                    />
-                                  )}
-                                  
-                                  <FormField
-                                    control={editForm.control}
-                                    name="isActive"
-                                    render={({ field }) => (
-                                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                                        <div className="space-y-0.5">
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                <FormField
+                  control={editForm.control}
+                  name="isActive"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                      <div className="space-y-0.5">
                         <FormLabel>Active Status</FormLabel>
-                                        </div>
-                                        <FormControl>
-                                          <Switch
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                          />
-                                        </FormControl>
-                                      </FormItem>
-                                    )}
-                                  />
-                                  
-                                  <DialogFooter>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <DialogFooter>
                   <Button type="submit" disabled={updateUserMutation.isPending}>
                     {updateUserMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Update User
-                                    </Button>
-                                  </DialogFooter>
-                                </form>
-                              </Form>
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </div>
-                            </DialogContent>
-                          </Dialog>
-                          
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!deletingUser} onOpenChange={(open) => !open && setDeletingUser(null)}>
-                            <DialogContent className="sm:max-w-[425px]">
-                              <DialogHeader>
-                                <DialogTitle>Confirm Deletion</DialogTitle>
-                                <DialogDescription>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
               Are you sure you want to delete this user? This action cannot be undone.
-                                </DialogDescription>
-                              </DialogHeader>
-                              
+            </DialogDescription>
+          </DialogHeader>
+
           <div className="py-4">
             {deletingUser && (
               <div className="space-y-2">
@@ -961,7 +965,7 @@ const Users = () => {
               </div>
             )}
           </div>
-          
+
           <DialogFooter>
             <Button
               variant="outline"
@@ -969,17 +973,17 @@ const Users = () => {
             >
               Cancel
             </Button>
-                                <Button 
-                                  variant="destructive" 
-                                  onClick={handleDelete}
-                                  disabled={deleteUserMutation.isPending}
-                                >
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleteUserMutation.isPending}
+            >
               {deleteUserMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Delete User
-                                </Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

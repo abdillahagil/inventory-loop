@@ -1,26 +1,26 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  Loader2, 
-  Plus, 
-  Pencil, 
-  Trash2, 
-  Package, 
-  SquareStack, 
-  MapPin 
+import {
+  Loader2,
+  Plus,
+  Pencil,
+  Trash2,
+  Package,
+  SquareStack,
+  MapPin
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useUserStore } from '@/store/userStore';
-import { 
-  getGodowns, 
-  createGodown, 
-  updateGodown, 
-  deleteGodown, 
-  Godown, 
-  GodownFormData 
+import {
+  getGodowns,
+  createGodown,
+  updateGodown,
+  deleteGodown,
+  Godown,
+  GodownFormData
 } from '@/services/godownService';
 
 import {
@@ -77,6 +77,8 @@ type GodownFormValues = {
 };
 
 const SuperAdminGodowns = () => {
+  // Helper to capitalize location
+  const capitalizeLocation = (loc: string) => loc ? loc.charAt(0).toUpperCase() + loc.slice(1) : '';
   const { user } = useUserStore();
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -108,7 +110,7 @@ const SuperAdminGodowns = () => {
 
   // Update godown mutation
   const updateGodownMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: GodownFormData }) => 
+    mutationFn: ({ id, data }: { id: string; data: GodownFormData }) =>
       updateGodown(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['godowns'] });
@@ -174,9 +176,9 @@ const SuperAdminGodowns = () => {
   // Handle edit godown form submission
   const onEditSubmit = (values: GodownFormValues) => {
     if (editingGodown) {
-      updateGodownMutation.mutate({ 
-        id: editingGodown.id, 
-        data: values as GodownFormData 
+      updateGodownMutation.mutate({
+        id: editingGodown.id,
+        data: values as GodownFormData
       });
     }
   };
@@ -201,7 +203,7 @@ const SuperAdminGodowns = () => {
           <h1 className="text-2xl font-bold">Godowns</h1>
           <p className="text-gray-600">Manage warehouse locations and their details</p>
         </div>
-        
+
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button className="flex items-center gap-2" size="sm">
@@ -216,7 +218,7 @@ const SuperAdminGodowns = () => {
                 Create a new warehouse location in the system
               </DialogDescription>
             </DialogHeader>
-            
+
             <Form {...addForm}>
               <form onSubmit={addForm.handleSubmit(onCreateSubmit)} className="space-y-4">
                 <FormField
@@ -232,7 +234,7 @@ const SuperAdminGodowns = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={addForm.control}
                   name="location"
@@ -246,7 +248,7 @@ const SuperAdminGodowns = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={addForm.control}
                   name="isActive"
@@ -267,13 +269,13 @@ const SuperAdminGodowns = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <DialogFooter>
                   <DialogClose asChild>
                     <Button type="button" variant="outline" size="sm">Cancel</Button>
                   </DialogClose>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={createGodownMutation.isPending}
                     size="sm"
                   >
@@ -290,7 +292,7 @@ const SuperAdminGodowns = () => {
           </DialogContent>
         </Dialog>
       </div>
-      
+
       <div className="flex flex-wrap gap-2 mb-4 w-full">
         <div className="stock-card flex items-center p-2 flex-grow min-w-0 max-w-full basis-0 bg-white rounded-lg shadow-sm">
           <div className="bg-blue-100 p-2 rounded-lg mr-2">
@@ -316,11 +318,11 @@ const SuperAdminGodowns = () => {
           </div>
           <div className="truncate">
             <h3 className="text-gray-500 text-xs truncate">Locations</h3>
-            <p className="text-lg font-semibold">{new Set(godowns?.map(g => g.location)).size || 0} locations</p>
+            <p className="text-lg font-semibold">{new Set(godowns?.map(g => capitalizeLocation(g.location))).size || 0} locations</p>
           </div>
         </div>
       </div>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>All Godowns</CardTitle>
@@ -346,7 +348,7 @@ const SuperAdminGodowns = () => {
                   godowns.map((godown) => (
                     <TableRow key={godown.id}>
                       <TableCell className="font-medium py-2 px-3">{godown.name}</TableCell>
-                      <TableCell className="py-2 px-3">{godown.location}</TableCell>
+                      <TableCell className="py-2 px-3">{capitalizeLocation(godown.location)}</TableCell>
                       <TableCell className="py-2 px-3">
                         <Badge variant={godown.isActive ? "default" : "secondary"}>
                           {godown.isActive ? 'Active' : 'Inactive'}
@@ -367,7 +369,7 @@ const SuperAdminGodowns = () => {
                                   Update godown details and information
                                 </DialogDescription>
                               </DialogHeader>
-                              
+
                               <Form {...editForm}>
                                 <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
                                   <FormField
@@ -383,7 +385,7 @@ const SuperAdminGodowns = () => {
                                       </FormItem>
                                     )}
                                   />
-                                  
+
                                   <FormField
                                     control={editForm.control}
                                     name="location"
@@ -397,7 +399,7 @@ const SuperAdminGodowns = () => {
                                       </FormItem>
                                     )}
                                   />
-                                  
+
                                   <FormField
                                     control={editForm.control}
                                     name="isActive"
@@ -418,13 +420,13 @@ const SuperAdminGodowns = () => {
                                       </FormItem>
                                     )}
                                   />
-                                  
+
                                   <DialogFooter>
                                     <DialogClose asChild>
                                       <Button type="button" variant="outline" size="sm">Cancel</Button>
                                     </DialogClose>
-                                    <Button 
-                                      type="submit" 
+                                    <Button
+                                      type="submit"
                                       disabled={updateGodownMutation.isPending}
                                       size="sm"
                                     >
@@ -440,7 +442,7 @@ const SuperAdminGodowns = () => {
                               </Form>
                             </DialogContent>
                           </Dialog>
-                          
+
                           <Dialog open={deletingGodown?.id === godown.id} onOpenChange={(open) => !open && setDeletingGodown(null)}>
                             <DialogTrigger asChild>
                               <Button variant="destructive" size="sm" className="flex items-center justify-center" onClick={() => setDeletingGodown(godown)}>
@@ -454,7 +456,7 @@ const SuperAdminGodowns = () => {
                                   Are you sure you want to delete the godown "{godown.name}"? This action cannot be undone.
                                 </DialogDescription>
                               </DialogHeader>
-                              
+
                               <div className="mt-4 p-4 bg-red-50 rounded-md text-red-800 text-sm">
                                 <p className="font-semibold">Warning:</p>
                                 <p>Deleting this godown will also affect:</p>
@@ -464,13 +466,13 @@ const SuperAdminGodowns = () => {
                                   <li>Historical records linked to this location</li>
                                 </ul>
                               </div>
-                              
+
                               <DialogFooter className="mt-4">
                                 <DialogClose asChild>
                                   <Button type="button" variant="outline" size="sm">Cancel</Button>
                                 </DialogClose>
-                                <Button 
-                                  variant="destructive" 
+                                <Button
+                                  variant="destructive"
                                   onClick={handleDelete}
                                   disabled={deleteGodownMutation.isPending}
                                   size="sm"

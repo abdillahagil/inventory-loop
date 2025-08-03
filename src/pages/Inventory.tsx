@@ -64,6 +64,12 @@ const Inventory = () => {
   // State for edit modal
   const [showEditModal, setShowEditModal] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<StockItem | null>(null);
+  // Only allow quantity change for assigned products
+  const [editedQuantity, setEditedQuantity] = useState<number>(0);
+  const [editError, setEditError] = useState<string>('');
+
+  // State for confirming delete when quantity is set to 0
+  const [showZeroDeleteConfirm, setShowZeroDeleteConfirm] = useState(false);
 
   // State for delete confirmation
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -138,48 +144,101 @@ const Inventory = () => {
   // Handler for opening the edit modal
   const handleEditClick = (item: StockItem) => {
     setItemToEdit(item);
-    setEditedProduct({
-      name: item.name,
-      quantity: item.quantity,
-      price: item.price || 0,
-      costPrice: item.costPrice || 0,
-      category: item.category || '',
-    });
+    setEditedQuantity(item.quantity);
+    setEditError('');
     setShowEditModal(true);
   };
 
   // Handler for submitting edits
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!itemToEdit) return;
+    setEditError('');
 
-    const updates: Partial<StockItem> = {
-      name: editedProduct.name,
-      quantity: editedProduct.quantity,
-      price: editedProduct.price,
-      costPrice: editedProduct.costPrice,
-      category: editedProduct.category,
-    };
+    // Only allow quantity change for assigned products
+    const originalQuantity = itemToEdit.quantity;
+    const newQuantity = editedQuantity;
+    const diff = newQuantity - originalQuantity;
 
-    console.log('Sending update with data:', updates);
-    console.log('Item being edited:', itemToEdit);
+    // Find corresponding unassigned product
+    const unassignedProduct = items.find(item => item.productId === itemToEdit.productId && item.location === 'Unassigned');
 
-    updateInventoryMutation.mutate(
-      { id: itemToEdit.id, updates },
-      {
-        onSuccess: async (data) => {
-          console.log('Update success response:', data);
-          // Force a manual refetch to ensure all price changes are visible
-          await refetch();
-          setShowEditModal(false);
-          setItemToEdit(null);
-        },
-        onError: (error) => {
-          console.error('Update failed:', error);
+    if (newQuantity === 0) {
+      setShowZeroDeleteConfirm(true);
+      return;
+    }
+
+    if (diff === 0) {
+      setShowEditModal(false);
+      setItemToEdit(null);
+      return;
+    }
+
+    if (diff > 0) {
+      // Increasing assigned quantity, must decrease unassigned
+      if (unassignedProduct) {
+        if (unassignedProduct.quantity >= diff) {
+          // Proceed: update assigned, update unassigned
+          updateInventoryMutation.mutate(
+            { id: itemToEdit.id, updates: { quantity: newQuantity } },
+            {
+              onSuccess: async () => {
+                updateInventoryMutation.mutate(
+                  { id: unassignedProduct.id, updates: { quantity: unassignedProduct.quantity - diff } },
+                  {
+                    onSuccess: async () => {
+                      await refetch();
+                      setShowEditModal(false);
+                      setItemToEdit(null);
+                    },
+                    onError: (error) => {
+                      setEditError('Failed to update unassigned product.');
+                    }
+                  }
+                );
+              },
+              onError: (error) => {
+                setEditError('Failed to update assigned product.');
+              }
+            }
+          );
+        } else {
+          setEditError('Not enough unassigned stock available.');
         }
+      } else {
+        setEditError('No unassigned product available. Please add unassigned stock first.');
       }
-    );
+    } else {
+      // Decreasing assigned quantity, must increase unassigned
+      if (unassignedProduct) {
+        updateInventoryMutation.mutate(
+          { id: itemToEdit.id, updates: { quantity: newQuantity } },
+          {
+            onSuccess: async () => {
+              updateInventoryMutation.mutate(
+                { id: unassignedProduct.id, updates: { quantity: unassignedProduct.quantity + Math.abs(diff) } },
+                {
+                  onSuccess: async () => {
+                    await refetch();
+                    setShowEditModal(false);
+                    setItemToEdit(null);
+                  },
+                  onError: (error) => {
+                    setEditError('Failed to update unassigned product.');
+                  }
+                }
+              );
+            },
+            onError: (error) => {
+              setEditError('Failed to update assigned product.');
+            }
+          }
+        );
+      } else {
+        // If no unassigned product, create one
+        setEditError('No unassigned product available. Please add unassigned stock first.');
+      }
+    }
   };
 
   // Handler for opening delete confirmation
@@ -253,10 +312,12 @@ const Inventory = () => {
     // Different filters based on active tab
     if (activeTab === 'all-products') {
       return matchesSearch;
-    } else if (activeTab === 'unassigned' && isGodownAdmin) {
+    } else if (activeTab === 'unassigned') {
       return matchesSearch && item.location === 'Unassigned';
     } else if (activeTab === 'my-godowns' && isGodownAdmin) {
       return matchesSearch && userGodowns.some(godown => item.location === godown.name);
+    } else if (activeTab === 'godowns' && isSuperAdmin) {
+      return matchesSearch && item.location !== 'Unassigned';
     }
 
     return matchesSearch;
@@ -462,13 +523,15 @@ const Inventory = () => {
           <p className="text-gray-600">Manage and track your product inventory across all locations</p>
         </div>
         <div className="flex space-x-2">
-          <Button
-            className="bg-stock-blue-600 hover:bg-stock-blue-700 flex items-center"
-            onClick={() => setShowAddModal(true)}
-          >
-            <Plus size={16} className="mr-1" />
-            Add Product
-          </Button>
+          {(isSuperAdmin || isGodownAdmin) && (
+            <Button
+              className="bg-stock-blue-600 hover:bg-stock-blue-700 flex items-center"
+              onClick={() => setShowAddModal(true)}
+            >
+              <Plus size={16} className="mr-1" />
+              Add Product
+            </Button>
+          )}
         </div>
       </div>
 
@@ -515,12 +578,16 @@ const Inventory = () => {
       </div>
 
       {/* Product tabs for GodownAdmin - moved above table */}
-      {isGodownAdmin && (
+      {(isGodownAdmin || isSuperAdmin) && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-2">
           <TabsList>
             <TabsTrigger value="all-products">All Products</TabsTrigger>
             <TabsTrigger value="unassigned">Unassigned ({unassignedItems.length})</TabsTrigger>
-            <TabsTrigger value="my-godowns">My Godowns ({userGodownItems.length})</TabsTrigger>
+            {isGodownAdmin ? (
+              <TabsTrigger value="my-godowns">My Godowns ({userGodownItems.length})</TabsTrigger>
+            ) : (
+              <TabsTrigger value="godowns">Godowns ({items.length - unassignedItems.length})</TabsTrigger>
+            )}
           </TabsList>
         </Tabs>
       )}
@@ -565,21 +632,36 @@ const Inventory = () => {
 
             <form onSubmit={handleAddProduct}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Product Name*
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={newProduct.name}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-stock-blue-500"
-                    placeholder="Enter product name"
-                    required
-                  />
+                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Product Name*
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={newProduct.name}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-stock-blue-500"
+                      placeholder="Enter product name"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Category*
+                    </label>
+                    <input
+                      type="text"
+                      name="category"
+                      value={newProduct.category}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-stock-blue-500"
+                      placeholder="Enter category"
+                      required
+                    />
+                  </div>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Quantity*
@@ -595,7 +677,6 @@ const Inventory = () => {
                     required
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Cost Price*
@@ -617,7 +698,6 @@ const Inventory = () => {
                     />
                   </div>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Selling Price*
@@ -638,20 +718,6 @@ const Inventory = () => {
                       required
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category
-                  </label>
-                  <input
-                    type="text"
-                    name="category"
-                    value={newProduct.category}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-stock-blue-500"
-                    placeholder="Enter category (optional)"
-                  />
                 </div>
               </div>
 
@@ -680,7 +746,7 @@ const Inventory = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Edit Product</h2>
+              <h2 className="text-xl font-bold">Edit Assigned Product Quantity</h2>
               <button
                 className="text-gray-500 hover:text-gray-700"
                 onClick={() => {
@@ -696,91 +762,20 @@ const Inventory = () => {
               <div className="grid grid-cols-1 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Product Name*
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={editedProduct.name}
-                    onChange={handleEditInputChange}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-stock-blue-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Quantity*
                   </label>
                   <input
                     type="number"
                     name="quantity"
-                    value={editedProduct.quantity}
-                    onChange={handleEditInputChange}
+                    value={editedQuantity}
+                    onChange={e => setEditedQuantity(Number(e.target.value))}
                     className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-stock-blue-500"
                     min="0"
                     required
                   />
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category
-                  </label>
-                  <input
-                    type="text"
-                    name="category"
-                    value={editedProduct.category}
-                    onChange={handleEditInputChange}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-stock-blue-500"
-                    placeholder="Enter category (optional)"
-                  />
-                </div>
-
-                {itemToEdit.location === 'Unassigned' && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Cost Price*
-                      </label>
-                      <div className="flex">
-                        <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
-                          $
-                        </span>
-                        <input
-                          type="number"
-                          name="costPrice"
-                          value={editedProduct.costPrice}
-                          onChange={handleEditInputChange}
-                          className="w-full p-2 border border-gray-300 rounded-r-md focus:outline-none focus:ring-1 focus:ring-stock-blue-500"
-                          min="0"
-                          step="0.01"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Selling Price*
-                      </label>
-                      <div className="flex">
-                        <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
-                          $
-                        </span>
-                        <input
-                          type="number"
-                          name="price"
-                          value={editedProduct.price}
-                          onChange={handleEditInputChange}
-                          className="w-full p-2 border border-gray-300 rounded-r-md focus:outline-none focus:ring-1 focus:ring-stock-blue-500"
-                          min="0"
-                          step="0.01"
-                          required
-                        />
-                      </div>
-                    </div>
-                  </>
+                {editError && (
+                  <div className="text-red-600 text-sm mt-2">{editError}</div>
                 )}
               </div>
 
@@ -799,7 +794,7 @@ const Inventory = () => {
                   type="submit"
                   disabled={updateInventoryMutation.isPending}
                 >
-                  {updateInventoryMutation.isPending ? 'Updating...' : 'Update Product'}
+                  {updateInventoryMutation.isPending ? 'Updating...' : 'Update Quantity'}
                 </Button>
               </div>
             </form>
@@ -808,6 +803,69 @@ const Inventory = () => {
       )}
 
       {/* Delete Confirmation Dialog */}
+
+      {/* Zero Quantity Delete Confirmation Dialog */}
+      {showZeroDeleteConfirm && itemToEdit && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Confirm Delete</h2>
+            <p className="mb-6">
+              Are you sure you want to delete <span className="font-semibold">{itemToEdit.name}</span> from this godown? This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowZeroDeleteConfirm(false);
+                }}
+                type="button"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  // Actually delete the assigned product
+                  const originalQuantity = itemToEdit.quantity;
+                  const unassignedProduct = items.find(item => item.productId === itemToEdit.productId && item.location === 'Unassigned');
+                  deleteInventoryMutation.mutate(itemToEdit.id, {
+                    onSuccess: async () => {
+                      if (unassignedProduct) {
+                        updateInventoryMutation.mutate(
+                          { id: unassignedProduct.id, updates: { quantity: unassignedProduct.quantity + originalQuantity } },
+                          {
+                            onSuccess: async () => {
+                              await refetch();
+                              setShowZeroDeleteConfirm(false);
+                              setShowEditModal(false);
+                              setItemToEdit(null);
+                            },
+                            onError: (error) => {
+                              setEditError('Failed to update unassigned product.');
+                            }
+                          }
+                        );
+                      } else {
+                        await refetch();
+                        setShowZeroDeleteConfirm(false);
+                        setShowEditModal(false);
+                        setItemToEdit(null);
+                      }
+                    },
+                    onError: (error) => {
+                      setEditError('Failed to delete assigned product.');
+                    }
+                  });
+                }}
+                type="button"
+                disabled={deleteInventoryMutation.isPending}
+              >
+                {deleteInventoryMutation.isPending ? 'Deleting...' : 'Delete'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       {showDeleteConfirm && itemToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">

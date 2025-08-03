@@ -66,62 +66,64 @@ function StockTable({
   return (
     <div>
       {/* Always show search and filter bar, even if no products */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-2">
-        <h2 className="text-lg font-semibold whitespace-nowrap">{title}</h2>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-            <input
-              type="text"
-              placeholder="Search products..."
-              className="pl-9 pr-4 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-stock-blue-500 w-44"
-              value={searchQuery}
-              onChange={e => setSearchQuery && setSearchQuery(e.target.value)}
-            />
+      <div className="flex flex-col md:flex-row md:items-center mb-4 gap-2">
+        <div className="flex items-center gap-4 w-full">
+          <h2 className="text-lg font-semibold whitespace-nowrap">{title}</h2>
+          <div className="flex flex-wrap items-center gap-2 ml-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+              <input
+                type="text"
+                placeholder="Search products..."
+                className="pl-9 pr-4 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-stock-blue-500 w-44"
+                value={searchQuery}
+                onChange={e => setSearchQuery && setSearchQuery(e.target.value)}
+              />
+            </div>
+            {/* Category Filter - always visible and enabled */}
+            {setSelectedCategory && (
+              <select
+                className="border border-gray-300 rounded-md py-1.5 px-2 text-sm focus:outline-none focus:ring-1 focus:ring-stock-blue-500"
+                value={selectedCategory}
+                onChange={e => setSelectedCategory(e.target.value)}
+                disabled={false}
+              >
+                <option value="">All Categories</option>
+                {categoryOptions.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            )}
+            {/* Location Filter - always visible and enabled */}
+            {setSelectedLocation && (
+              <select
+                className="border border-gray-300 rounded-md py-1.5 px-2 text-sm focus:outline-none focus:ring-1 focus:ring-stock-blue-500"
+                value={selectedLocation}
+                onChange={e => setSelectedLocation(e.target.value)}
+                disabled={false}
+              >
+                <option value="">All Locations</option>
+                {locationOptions.map(loc => (
+                  <option key={loc} value={loc}>{loc}</option>
+                ))}
+              </select>
+            )}
           </div>
-          {/* Category Filter - always visible and enabled */}
-          {setSelectedCategory && (
-            <select
-              className="border border-gray-300 rounded-md py-1.5 px-2 text-sm focus:outline-none focus:ring-1 focus:ring-stock-blue-500"
-              value={selectedCategory}
-              onChange={e => setSelectedCategory(e.target.value)}
-              disabled={false}
-            >
-              <option value="">All Categories</option>
-              {categoryOptions.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          )}
-          {/* Location Filter - always visible and enabled */}
-          {setSelectedLocation && (
-            <select
-              className="border border-gray-300 rounded-md py-1.5 px-2 text-sm focus:outline-none focus:ring-1 focus:ring-stock-blue-500"
-              value={selectedLocation}
-              onChange={e => setSelectedLocation(e.target.value)}
-              disabled={false}
-            >
-              <option value="">All Locations</option>
-              {locationOptions.map(loc => (
-                <option key={loc} value={loc}>{loc}</option>
-              ))}
-            </select>
-          )}
         </div>
       </div>
       <div className="overflow-x-auto" style={{ overflowY: 'scroll', maxHeight: '500px', minHeight: '300px', height: '400px' }}>
-        <table className="data-table w-full">
+        <table className="data-table w-full text-center">
           <thead>
             <tr>
-              <th className="whitespace-nowrap text-center" style={{ width: '18%' }}>Name</th>
-              <th className="text-center" style={{ width: '14%' }}>Category</th>
-              <th className="text-center" style={{ width: '10%' }}>Quantity</th>
+              <th className="whitespace-nowrap text-center" style={{ width: '13%' }}>Name</th>
+              <th className="text-center" style={{ width: '13%' }}>Category</th>
+              <th className="text-center" style={{ width: '11%' }}>Quantity</th>
               {!hideCostPrice && <th className="text-center" style={{ width: '12%' }}>Cost Price</th>}
               <th className="text-center" style={{ width: '12%' }}>Price</th>
-              <th className="text-center" style={{ width: '10%' }}>Status</th>
-              <th className="text-center" style={{ width: '12%' }}>Location</th>
-              <th className="text-center" style={{ width: '12%' }}>Last Updated</th>
-              <th className="text-center" style={{ width: '10%' }}>Actions</th>
+              <th className="text-center" style={{ width: '11%' }}>Status</th>
+              <th className="text-center" style={{ width: '13%' }}>Location</th>
+              <th className="text-center" style={{ width: '13%' }}>Last Updated</th>
+              <th className="text-center" style={{ width: '12%' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -140,58 +142,67 @@ function StockTable({
               ))
               : filteredItems.length > 0 ? filteredItems.map((item, idx) => {
                 const cells = [];
-                cells.push(<td key="name" className="font-medium text-center">{item.name}</td>);
-                cells.push(<td key="cat" className="text-center">{item.category || '-'}</td>);
-                cells.push(<td key="qty" className="text-center">{item.quantity}</td>);
+                const cellClass = "text-center align-middle !p-0";
+                cells.push(<td key="name" className={"font-medium " + cellClass}><div className="flex items-center justify-center h-full min-h-[48px] w-full">{item.name}</div></td>);
+                cells.push(<td key="cat" className={cellClass}><div className="flex items-center justify-center h-full min-h-[48px] w-full">{item.category || '-'}</div></td>);
+                cells.push(<td key="qty" className={cellClass}><div className="flex items-center justify-center h-full min-h-[48px] w-full">{item.quantity}</div></td>);
                 if (!hideCostPrice) {
                   cells.push(
-                    <td key="cost" className="text-center">
-                      {item.costPrice ? (typeof item.costPrice === 'number'
-                        ? `$${item.costPrice.toFixed(2)}`
-                        : `$${item.costPrice}`) : '-'}
+                    <td key="cost" className={cellClass}>
+                      <div className="flex items-center justify-center h-full min-h-[48px] w-full">
+                        {item.costPrice ? (typeof item.costPrice === 'number'
+                          ? `$${item.costPrice.toFixed(2)}`
+                          : `$${item.costPrice}`) : '-'}
+                      </div>
                     </td>
                   );
                 }
                 cells.push(
-                  <td key="price" className="text-center">
-                    {item.price && item.costPrice ? (
-                      <div className="flex items-center justify-center group relative">
-                        <span className={`inline-block w-2 h-2 rounded-full mr-1.5 ${safeNumber(item.price) > safeNumber(item.costPrice) * 1.3
-                          ? 'bg-green-500'
-                          : safeNumber(item.price) > safeNumber(item.costPrice) * 1.1
-                            ? 'bg-amber-500'
-                            : 'bg-red-500'
-                          }`}></span>
-                        <span>{typeof item.price === 'number'
-                          ? `$${item.price.toFixed(2)}`
-                          : `$${item.price}`}</span>
-                      </div>
-                    ) : item.price ? (typeof item.price === 'number'
-                      ? `$${item.price.toFixed(2)}`
-                      : `$${item.price}`) : '-'}
+                  <td key="price" className={cellClass}>
+                    <div className="flex items-center justify-center h-full min-h-[48px] w-full">
+                      {item.price && item.costPrice ? (
+                        <>
+                          <span className={`inline-block w-2 h-2 rounded-full mr-1.5 ${safeNumber(item.price) > safeNumber(item.costPrice) * 1.3
+                            ? 'bg-green-500'
+                            : safeNumber(item.price) > safeNumber(item.costPrice) * 1.1
+                              ? 'bg-amber-500'
+                              : 'bg-red-500'
+                            }`}></span>
+                          <span>{typeof item.price === 'number'
+                            ? `$${item.price.toFixed(2)}`
+                            : `$${item.price}`}</span>
+                        </>
+                      ) : item.price ? (typeof item.price === 'number'
+                        ? `$${item.price.toFixed(2)}`
+                        : `$${item.price}`) : '-'}
+                    </div>
                   </td>
                 );
                 cells.push(
-                  <td key="status" className="text-center">
-                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${item.status === 'Low'
-                      ? 'bg-alert-red text-white'
-                      : item.status === 'High'
-                        ? 'bg-alert-amber text-white'
-                        : 'bg-alert-green text-white'
-                      }`}>
-                      {item.status}
-                    </span>
+                  <td key="status" className={cellClass}>
+                    <div className="flex items-center justify-center h-full min-h-[48px] w-full">
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${item.status === 'Low'
+                        ? 'bg-alert-red text-white'
+                        : item.status === 'High'
+                          ? 'bg-alert-amber text-white'
+                          : 'bg-alert-green text-white'
+                        }`}>
+                        {item.status}
+                      </span>
+                    </div>
                   </td>
                 );
+                // Capitalize first letter of godown name for display
+                const displayLocation = item.location ? item.location.charAt(0).toUpperCase() + item.location.slice(1) : '';
                 cells.push(
-                  <td key="loc" className="text-center">{item.location}</td>
+                  <td key="loc" className={cellClass}><div className="flex items-center justify-center h-full min-h-[48px] w-full">{displayLocation}</div></td>
                 );
                 cells.push(
-                  <td key="last" className="text-center">{item.lastUpdated}</td>
+                  <td key="last" className={cellClass}><div className="flex items-center justify-center h-full min-h-[48px] w-full">{item.lastUpdated}</div></td>
                 );
                 cells.push(
-                  <td key="actions" className="text-center">
-                    <div className="flex items-center space-x-2 justify-center">
+                  <td key="actions" className={cellClass}>
+                    <div className="flex items-center justify-center h-full min-h-[48px] w-full space-x-2">
                       {showAssignButton && item.location === 'Unassigned' && onAssignClick && (
                         <button
                           onClick={() => onAssignClick(item)}
@@ -201,7 +212,8 @@ function StockTable({
                           <Warehouse size={16} />
                         </button>
                       )}
-                      {onEditClick && !hideEditButton(item) && (
+                      {/* Only show edit button if delete button is also allowed (godownadmin or superadmin) */}
+                      {onEditClick && !hideEditButton(item) && !hideDeleteButton(item) && (
                         <button
                           onClick={() => onEditClick(item)}
                           className="text-sm text-gray-500 hover:text-gray-700"

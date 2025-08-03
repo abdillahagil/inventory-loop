@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -22,6 +22,9 @@ const TransferForm = ({ onCancel }: TransferFormProps) => {
   const [transferType, setTransferType] = useState<TransferType>('godown-to-godown');
   const [sourceLocation, setSourceLocation] = useState<string>('');
   const [destinationLocation, setDestinationLocation] = useState<string>('');
+  // Helper to capitalize godown/shop names
+  const capitalizeLocation = (loc: string) =>
+    loc ? loc.charAt(0).toUpperCase() + loc.slice(1) : '';
   const [transferDate, setTransferDate] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [items, setItems] = useState([{ id: 1, productName: '', quantity: '', unit: 'pcs' }]);
@@ -46,7 +49,7 @@ const TransferForm = ({ onCancel }: TransferFormProps) => {
   };
 
   const handleItemChange = (id: number, field: string, value: string) => {
-    setItems(items.map(item => 
+    setItems(items.map(item =>
       item.id === id ? { ...item, [field]: value } : item
     ));
   };
@@ -68,7 +71,7 @@ const TransferForm = ({ onCancel }: TransferFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Convert form items to TransferItem structure
     const transferItems: Omit<TransferItem, 'id'>[] = items
       .filter(item => item.productName && item.quantity)
@@ -78,7 +81,7 @@ const TransferForm = ({ onCancel }: TransferFormProps) => {
         quantity: Number(item.quantity),
         unit: item.unit
       }));
-    
+
     const transferData: Omit<Transfer, 'id' | 'createdAt' | 'updatedAt'> = {
       sourceLocation,
       destinationLocation,
@@ -86,7 +89,7 @@ const TransferForm = ({ onCancel }: TransferFormProps) => {
       status: 'Pending',
       createdBy: 'Current User', // Add the missing createdBy property
     };
-    
+
     createTransfer.mutate(transferData, {
       onSuccess: () => {
         if (onCancel) onCancel();
@@ -97,13 +100,13 @@ const TransferForm = ({ onCancel }: TransferFormProps) => {
   return (
     <div className="stock-card">
       <h2 className="text-lg font-semibold mb-4">Create Stock Transfer</h2>
-      
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Transfer Type</label>
-            <Select 
-              value={transferType} 
+            <Select
+              value={transferType}
               onValueChange={(value) => setTransferType(value as TransferType)}
             >
               <SelectTrigger className="w-full">
@@ -116,7 +119,7 @@ const TransferForm = ({ onCancel }: TransferFormProps) => {
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -129,21 +132,21 @@ const TransferForm = ({ onCancel }: TransferFormProps) => {
                 <SelectContent>
                   {locationTypes.source === 'Godown' ? (
                     <>
-                      <SelectItem key="source-godown1" value="godown1">Main Warehouse</SelectItem>
-                      <SelectItem key="source-godown2" value="godown2">Secondary Warehouse</SelectItem>
-                      <SelectItem key="source-godown3" value="godown3">Cold Storage Facility</SelectItem>
+                      <SelectItem key="source-godown1" value="godown1">{capitalizeLocation('Main Warehouse')}</SelectItem>
+                      <SelectItem key="source-godown2" value="godown2">{capitalizeLocation('Secondary Warehouse')}</SelectItem>
+                      <SelectItem key="source-godown3" value="godown3">{capitalizeLocation('Cold Storage Facility')}</SelectItem>
                     </>
                   ) : (
                     <>
-                      <SelectItem key="source-shop1" value="shop1">Downtown Shop</SelectItem>
-                      <SelectItem key="source-shop2" value="shop2">Mall Branch</SelectItem>
-                      <SelectItem key="source-shop3" value="shop3">Airport Outlet</SelectItem>
+                      <SelectItem key="source-shop1" value="shop1">{capitalizeLocation('Downtown Shop')}</SelectItem>
+                      <SelectItem key="source-shop2" value="shop2">{capitalizeLocation('Mall Branch')}</SelectItem>
+                      <SelectItem key="source-shop3" value="shop3">{capitalizeLocation('Airport Outlet')}</SelectItem>
                     </>
                   )}
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Destination {locationTypes.destination}
@@ -155,40 +158,40 @@ const TransferForm = ({ onCancel }: TransferFormProps) => {
                 <SelectContent>
                   {locationTypes.destination === 'Godown' ? (
                     <>
-                      <SelectItem key="dest-godown1" value="godown1">Main Warehouse</SelectItem>
-                      <SelectItem key="dest-godown2" value="godown2">Secondary Warehouse</SelectItem>
-                      <SelectItem key="dest-godown3" value="godown3">Cold Storage Facility</SelectItem>
+                      <SelectItem key="dest-godown1" value="godown1">{capitalizeLocation('Main Warehouse')}</SelectItem>
+                      <SelectItem key="dest-godown2" value="godown2">{capitalizeLocation('Secondary Warehouse')}</SelectItem>
+                      <SelectItem key="dest-godown3" value="godown3">{capitalizeLocation('Cold Storage Facility')}</SelectItem>
                     </>
                   ) : (
                     <>
-                      <SelectItem key="dest-shop1" value="shop1">Downtown Shop</SelectItem>
-                      <SelectItem key="dest-shop2" value="shop2">Mall Branch</SelectItem>
-                      <SelectItem key="dest-shop3" value="shop3">Airport Outlet</SelectItem>
+                      <SelectItem key="dest-shop1" value="shop1">{capitalizeLocation('Downtown Shop')}</SelectItem>
+                      <SelectItem key="dest-shop2" value="shop2">{capitalizeLocation('Mall Branch')}</SelectItem>
+                      <SelectItem key="dest-shop3" value="shop3">{capitalizeLocation('Airport Outlet')}</SelectItem>
                     </>
                   )}
                 </SelectContent>
               </Select>
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Transfer Date</label>
-            <Input 
-              type="date" 
+            <Input
+              type="date"
               value={transferDate}
               onChange={(e) => setTransferDate(e.target.value)}
             />
           </div>
         </div>
-        
+
         <div>
           <h3 className="text-md font-medium mb-2">Items to Transfer</h3>
           <div className="space-y-3">
             {items.map((item) => (
               <div key={item.id} className="flex items-center space-x-2">
                 <div className="flex-grow">
-                  <Select 
-                    value={item.productName} 
+                  <Select
+                    value={item.productName}
                     onValueChange={(value) => handleItemChange(item.id, 'productName', value)}
                   >
                     <SelectTrigger>
@@ -202,20 +205,20 @@ const TransferForm = ({ onCancel }: TransferFormProps) => {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="w-20">
-                  <Input 
-                    type="number" 
-                    min="1" 
-                    value={item.quantity} 
-                    onChange={(e) => handleItemChange(item.id, 'quantity', e.target.value)} 
-                    placeholder="Qty" 
+                  <Input
+                    type="number"
+                    min="1"
+                    value={item.quantity}
+                    onChange={(e) => handleItemChange(item.id, 'quantity', e.target.value)}
+                    placeholder="Qty"
                   />
                 </div>
-                
+
                 <div className="w-20">
-                  <Select 
-                    value={item.unit} 
+                  <Select
+                    value={item.unit}
                     onValueChange={(value) => handleItemChange(item.id, 'unit', value)}
                   >
                     <SelectTrigger>
@@ -228,10 +231,10 @@ const TransferForm = ({ onCancel }: TransferFormProps) => {
                     </SelectContent>
                   </Select>
                 </div>
-                
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+
+                <Button
+                  variant="ghost"
+                  size="icon"
                   type="button"
                   onClick={() => handleRemoveItem(item.id)}
                   disabled={items.length === 1}
@@ -241,37 +244,37 @@ const TransferForm = ({ onCancel }: TransferFormProps) => {
               </div>
             ))}
           </div>
-          
-          <Button 
-            type="button" 
-            variant="outline" 
-            size="sm" 
-            className="mt-3" 
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-3"
             onClick={handleAddItem}
           >
             <Plus size={16} className="mr-1" />
             Add More Items
           </Button>
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-          <textarea 
-            className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-stock-blue-500" 
+          <textarea
+            className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-stock-blue-500"
             rows={3}
             placeholder="Add any additional notes or instructions..."
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           ></textarea>
         </div>
-        
+
         <div className="flex justify-end space-x-3">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button 
-            type="submit" 
-            variant="default" 
+          <Button
+            type="submit"
+            variant="default"
             className="bg-stock-blue-600 hover:bg-stock-blue-700"
             disabled={createTransfer.isPending}
           >

@@ -1,9 +1,9 @@
 import express from 'express';
-import { 
-  getInventory, 
-  getInventoryById, 
-  createInventory, 
-  updateInventory, 
+import {
+  getInventory,
+  getInventoryById,
+  createInventory,
+  updateInventory,
   deleteInventory,
   getLowStockItems
 } from '../controllers/inventoryController.js';
@@ -24,7 +24,7 @@ router.get('/low-stock', getLowStockItems);
 
 router.route('/:id')
   .get(getInventoryById)
-  .put(updateInventory) // Access control is handled in the controller
+  .put(authorize('superadmin', 'godownadmin'), updateInventory)
   .delete(authorize('superadmin', 'godownadmin'), deleteInventory);
 
 export default router; 

@@ -185,8 +185,8 @@ const createInventory = async (req, res) => {
         });
       }
     }
-    // If productId is not provided and it's a superadmin, create a new product
-    else if (req.user.role === 'superadmin' && name && sku) {
+    // If productId is not provided and user is superadmin or godownadmin, create a new product
+    else if ((req.user.role === 'superadmin' || req.user.role === 'godownadmin') && name && sku) {
       // Check if product with same SKU already exists
       const productExists = await Product.findOne({ where: { sku } });
 
@@ -284,37 +284,24 @@ const updateInventory = async (req, res) => {
     console.log('------------------------------------------');
 
     if (req.user.role === 'superadmin') {
-      console.log('Access granted: User is superadmin');
+      // Superadmin can edit any inventory
       canUpdate = true;
     } else if (req.user.role === 'godownadmin') {
-      // For GodownAdmin specifically, if they're trying to assign an 
-      // unassigned product to any location, allow it
-      if (inventory.location === 'Unassigned' && req.body.location) {
-        console.log('Access granted: GodownAdmin assigning unassigned product');
-        canUpdate = true;
-      }
-      // Godown admins can update their assigned locations
-      else if (req.user.location) {
-        // Parse the comma-separated godown names from the user's location
+      // GodownAdmin can edit inventory in their assigned godowns OR any Unassigned inventory
+      if (req.user.location) {
         const assignedGodownNames = req.user.location.split(',').map(name => name.trim());
-        console.log('Godown admin assigned locations:', assignedGodownNames);
-
-        // Check if the inventory location is in the assigned godowns
+        // Allow edit if inventory is in one of their godowns
         if (assignedGodownNames.includes(inventory.location)) {
-          console.log('Access granted: Godown admin updating one of their assigned locations');
+          canUpdate = true;
+        } else if (inventory.location === 'Unassigned') {
+          // Allow editing any Unassigned inventory (not just assignment)
           canUpdate = true;
         } else {
-          console.log('Access denied: Location not in assigned godowns');
+          // Not allowed
         }
       }
-      else {
-        console.log('Access denied: Location mismatch and not unassigned');
-      }
     } else if (req.user.role === 'shopadmin' && req.user.location === inventory.location) {
-      console.log('Access granted: Shop admin updating their own location');
       canUpdate = true;
-    } else {
-      console.log('Access denied: No matching rule');
     }
 
     if (!canUpdate) {

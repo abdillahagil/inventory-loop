@@ -83,19 +83,14 @@ const syncDatabase = async (force = false) => {
   try {
     await sequelize.sync({ force });
     console.log('Database synchronized successfully');
-    
-    // Always clear all data on server restart, 
-    // even if we're not doing a full resync (force=true)
-    await clearGodownData();
-    await clearShopData();
-    await clearProductData();
-    await clearInventoryData();
-    
-    // Seed initial data if needed
+    // Only clear and seed data if force is true
     if (force) {
+      await clearGodownData();
+      await clearShopData();
+      await clearProductData();
+      await clearInventoryData();
       await seedInitialData();
     }
-    
     return true;
   } catch (error) {
     console.error('Failed to synchronize database:', error);
